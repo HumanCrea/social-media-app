@@ -1,0 +1,459 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  username    String   @unique
+  displayName String
+  password    String
+  bio         String?
+  avatar      String?
+  coverImage  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Posts
+  posts    Post[]
+  likes    Like[]
+  comments Comment[]
+
+  // Following system
+  following Follow[] @relation("UserFollowing")
+  followers Follow[] @relation("UserFollowers")
+
+  // Chat system
+  sentMessages     Message[] @relation("MessageSender")
+  receivedMessages Message[] @relation("MessageReceiver")
+  chatParticipants ChatParticipant[]
+
+  // Notifications
+  sentNotifications     Notification[] @relation("NotificationSender")
+  receivedNotifications Notification[] @relation("NotificationReceiver")
+
+  // Polls
+  polls     Poll[]
+  pollVotes PollVote[]
+
+  // Reports and Blocks
+  reports        Report[] @relation("ReportSender")
+  blockedUsers   Block[]  @relation("Blocker")
+  blockedByUsers Block[]  @relation("Blocked")
+
+  // Stories
+  stories    Story[]
+  storyViews StoryView[]
+  storyLikes StoryLike[]
+
+  // Bookmarks
+  bookmarks Bookmark[]
+
+  // Short Videos
+  shortVideos      ShortVideo[]
+  videoLikes       VideoLike[]
+  videoViews       VideoView[]
+  videoComments    VideoComment[]
+  videoBookmarks   VideoBookmark[]
+
+  // Achievements
+  achievements UserAchievement[]
+
+  @@map("users")
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  content   String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+
+  likes     Like[]
+  comments  Comment[]
+  hashtags  PostHashtag[]
+  bookmarks Bookmark[]
+
+  @@map("posts")
+}
+
+model Like {
+  id     String @id @default(cuid())
+  userId String
+  postId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@map("likes")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+  post     Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId   String
+
+  @@map("comments")
+}
+
+model Follow {
+  id          String @id @default(cuid())
+  followerId  String
+  followingId String
+
+  follower  User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+model Chat {
+  id           String   @id @default(cuid())
+  name         String?
+  isGroupChat  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  lastMessage  String?
+  lastActivity DateTime @default(now())
+
+  participants ChatParticipant[]
+  messages     Message[]
+
+  @@map("chats")
+}
+
+model ChatParticipant {
+  id     String @id @default(cuid())
+  userId String
+  chatId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chatId])
+  @@map("chat_participants")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  isRead    Boolean  @default(false)
+
+  sender     User   @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId   String
+  receiver   User?  @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiverId String?
+  chat       Chat?  @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  chatId     String?
+
+  @@map("messages")
+}
+
+model Notification {
+  id        String  @id @default(cuid())
+  type      String  // LIKE, COMMENT, FOLLOW, MESSAGE
+  content   String
+  isRead    Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  sender     User?   @relation("NotificationSender", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId   String?
+  receiver   User    @relation("NotificationReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiverId String
+
+  // Reference IDs for different notification types
+  postId    String?
+  commentId String?
+  followId  String?
+
+  @@map("notifications")
+}
+
+model Poll {
+  id                 String    @id @default(cuid())
+  question          String
+  expiresAt         DateTime
+  allowMultipleVotes Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+
+  options PollOption[]
+  votes   PollVote[]
+
+  @@map("polls")
+}
+
+model PollOption {
+  id   String @id @default(cuid())
+  text String
+
+  poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId String
+
+  votes PollVote[]
+
+  @@map("poll_options")
+}
+
+model PollVote {
+  id       String @id @default(cuid())
+  userId   String
+  optionId String
+  pollId   String
+
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  option PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  poll   Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, optionId])
+  @@map("poll_votes")
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  targetId    String
+  targetType  String   // 'user' or 'post'
+  reason      String
+  description String?
+  status      String   @default("pending") // pending, reviewed, resolved
+  createdAt   DateTime @default(now())
+
+  reporter User @relation("ReportSender", fields: [reporterId], references: [id], onDelete: Cascade)
+  reporterId String
+
+  @@map("reports")
+}
+
+model Block {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  blocker   User   @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockerId String
+  blocked   User   @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  blockedId String
+
+  @@unique([blockerId, blockedId])
+  @@map("blocks")
+}
+
+model Story {
+  id        String   @id @default(cuid())
+  mediaUrl  String?
+  text      String?
+  mediaType String?  // 'image' or 'video'
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+
+  views StoryView[]
+  likes StoryLike[]
+
+  @@map("stories")
+}
+
+model StoryView {
+  id      String @id @default(cuid())
+  userId  String
+  storyId String
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storyId])
+  @@map("story_views")
+}
+
+model StoryLike {
+  id      String @id @default(cuid())
+  userId  String
+  storyId String
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storyId])
+  @@map("story_likes")
+}
+
+model Hashtag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  count     Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts  PostHashtag[]
+  videos VideoHashtag[]
+
+  @@map("hashtags")
+}
+
+model PostHashtag {
+  id       String @id @default(cuid())
+  postId   String
+  hashtagId String
+
+  post    Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  hashtag Hashtag @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, hashtagId])
+  @@map("post_hashtags")
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@map("bookmarks")
+}
+
+model ShortVideo {
+  id          String   @id @default(cuid())
+  title       String?
+  description String?
+  videoUrl    String
+  thumbnailUrl String?
+  duration    Int      // Duration in seconds
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+
+  likes     VideoLike[]
+  viewLogs  VideoView[]
+  hashtags  VideoHashtag[]
+  comments  VideoComment[]
+  bookmarks VideoBookmark[]
+
+  @@map("short_videos")
+}
+
+model VideoLike {
+  id      String @id @default(cuid())
+  userId  String
+  videoId String
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video ShortVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoId])
+  @@map("video_likes")
+}
+
+model VideoView {
+  id        String   @id @default(cuid())
+  userId    String?  // Nullable for anonymous views
+  videoId   String
+  watchTime Int      @default(0) // Watch time in seconds
+  createdAt DateTime @default(now())
+
+  user  User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  video ShortVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@map("video_views")
+}
+
+model VideoHashtag {
+  id        String @id @default(cuid())
+  videoId   String
+  hashtagId String
+
+  video   ShortVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  hashtag Hashtag    @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  @@unique([videoId, hashtagId])
+  @@map("video_hashtags")
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  title       String
+  description String
+  icon        String   // Emoji or icon identifier
+  category    String   // social, content, engagement, milestone, etc.
+  rarity      String   @default("common") // common, rare, epic, legendary
+  points      Int      @default(0)
+  requirement String   // JSON string describing the requirement
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime @default(now())
+  progress      Int      @default(0)
+  isCompleted   Boolean  @default(false)
+  isDisplayed   Boolean  @default(true)
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+model VideoComment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  author   User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+  video    ShortVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  videoId  String
+
+  @@map("video_comments")
+}
+
+model VideoBookmark {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  video   ShortVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  videoId String
+
+  @@unique([userId, videoId])
+  @@map("video_bookmarks")
+}
