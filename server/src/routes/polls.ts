@@ -93,7 +93,11 @@ router.post('/:pollId/vote', authenticateToken, async (req: AuthRequest, res) =>
     const votes = await Promise.all(
       optionIds.map((optionId: string) =>
         prisma.pollVote.create({
-          data: { userId, optionId }
+          data: { 
+            userId,
+            optionId,
+            pollId
+          }
         })
       )
     )

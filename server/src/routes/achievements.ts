@@ -296,16 +296,19 @@ async function checkAndUnlockAchievements(userId: string) {
 
         case 'post_likes':
           // Check if any post has the required likes
-          const popularPost = await prisma.post.findFirst({
+          const postWithLikes = await prisma.post.findFirst({
             where: {
-              authorId: userId,
-              likes: {
-                _count: {
-                  gte: requirement.target
+              authorId: userId
+            },
+            include: {
+              _count: {
+                select: {
+                  likes: true
                 }
               }
             }
           });
+          const popularPost = postWithLikes && postWithLikes._count.likes >= requirement.target ? postWithLikes : null;
           shouldUnlock = !!popularPost;
           
           // Get max likes on any post for progress

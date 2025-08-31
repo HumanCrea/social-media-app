@@ -38,8 +38,7 @@ router.get('/search/:query', async (req, res) => {
     const hashtags = await prisma.hashtag.findMany({
       where: {
         name: {
-          contains: query,
-          mode: 'insensitive'
+          contains: query
         }
       },
       orderBy: [
