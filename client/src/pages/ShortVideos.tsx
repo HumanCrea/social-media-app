@@ -57,7 +57,7 @@ export default function ShortVideos() {
     isError
   } = useInfiniteQuery({
     queryKey: ['videos', 'feed'],
-    queryFn: async ({ pageParam = null }) => {
+    queryFn: async ({ pageParam = null }: { pageParam?: string | null }) => {
       const params = new URLSearchParams()
       if (pageParam) params.set('cursor', pageParam)
       params.set('limit', '10')
@@ -65,7 +65,7 @@ export default function ShortVideos() {
       const response = await axios.get(`/api/videos/feed?${params}`)
       return response.data as VideosResponse
     },
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    getNextPageParam: (lastPage: VideosResponse) => lastPage.nextCursor,
     initialPageParam: null
   })
 
