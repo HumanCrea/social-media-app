@@ -161,7 +161,7 @@ export default function LiveReactions({ postId, onReactionSent }: LiveReactionsP
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes float-up {
           0% {
             opacity: 1;
