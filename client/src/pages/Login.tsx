@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { useToast } from '../contexts/ToastContext'
@@ -9,6 +9,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const { addToast } = useToast()
+  const googleButtonRef = useRef<HTMLDivElement>(null)
   
   const login = useAuthStore(state => state.login)
   const googleLogin = useAuthStore(state => state.googleLogin)
@@ -107,6 +108,21 @@ export default function Login() {
                 callback: handleGoogleResponse
               })
               console.log('🔍 GOOGLE DEBUG - ✅ Google initialized successfully')
+              
+              // Also render a button as fallback
+              if (googleButtonRef.current) {
+                try {
+                  window.google.accounts.id.renderButton(googleButtonRef.current, {
+                    theme: 'outline',
+                    size: 'large',
+                    width: '100%',
+                    text: 'signin_with'
+                  })
+                  console.log('🔍 GOOGLE DEBUG - ✅ Google button rendered')
+                } catch (renderError) {
+                  console.error('🔍 GOOGLE DEBUG - Button render error:', renderError)
+                }
+              }
             } catch (error) {
               console.error('🔍 GOOGLE DEBUG - Error initializing Google:', error)
             }
@@ -139,16 +155,39 @@ export default function Login() {
   const handleGoogleLogin = () => {
     console.log('🔍 GOOGLE DEBUG - Google login clicked')
     console.log('🔍 GOOGLE DEBUG - Window.google available:', !!window.google)
+    console.log('🔍 GOOGLE DEBUG - Window.google.accounts:', !!window.google?.accounts)
+    console.log('🔍 GOOGLE DEBUG - Window.google.accounts.id:', !!window.google?.accounts?.id)
     
-    if (window.google) {
+    if (window.google?.accounts?.id) {
       console.log('🔍 GOOGLE DEBUG - Prompting Google login')
-      window.google.accounts.id.prompt()
+      try {
+        // Try the prompt method
+        window.google.accounts.id.prompt((notification: any) => {
+          console.log('🔍 GOOGLE DEBUG - Prompt notification:', notification)
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            console.log('🔍 GOOGLE DEBUG - Prompt not displayed, trying renderButton instead')
+            // If prompt doesn't work, fall back to manual trigger
+            addToast({
+              type: 'info',
+              title: 'Google Sign-in',
+              message: 'Please use the manual Google Sign-in option'
+            })
+          }
+        })
+      } catch (error) {
+        console.error('🔍 GOOGLE DEBUG - Error with prompt:', error)
+        addToast({
+          type: 'error',
+          title: 'Google Sign-in error',
+          message: 'There was an issue with Google Sign-in. Please try email login.'
+        })
+      }
     } else {
-      console.error('🔍 GOOGLE DEBUG - Google not loaded')
+      console.error('🔍 GOOGLE DEBUG - Google not fully loaded')
       addToast({
         type: 'error',
-        title: 'Google Sign-In not loaded',
-        message: 'Please refresh the page and try again'
+        title: 'Google Sign-In not ready',
+        message: 'Please wait for Google SDK to load completely'
       })
     }
   }
@@ -237,8 +276,9 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Google Sign-In Button */}
+          {/* Google Sign-In Buttons */}
           <div className="mt-6 space-y-2">
+            {/* Custom Google Button */}
             <button
               onClick={handleGoogleLogin}
               disabled={googleLoading}
@@ -250,8 +290,11 @@ export default function Login() {
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
-              {googleLoading ? 'Connecting...' : 'Sign in with Google'}
+              {googleLoading ? 'Connecting...' : 'Sign in with Google (Custom)'}
             </button>
+            
+            {/* Google's Rendered Button */}
+            <div ref={googleButtonRef} className="w-full"></div>
             
             {/* Debug Buttons */}
             <div className="flex space-x-2">
