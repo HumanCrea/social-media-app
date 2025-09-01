@@ -83,12 +83,13 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await axios.post(`${API_URL}/auth/register`, data)
           
-          const { user, token } = response.data
+          // Registration now returns a message about email verification, not a token
+          const { message, user } = response.data
           
-          // Set axios default header
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+          // Don't set token since email verification is required
+          // User will get token after email verification and login
           
-          set({ user, token })
+          return { message, user }
         } catch (error: any) {
           throw new Error(error.response?.data?.error || 'Registration failed')
         }

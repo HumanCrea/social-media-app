@@ -40,22 +40,32 @@ export default function Register() {
     setLoading(true)
 
     try {
-      await register({
+      const result = await register({
         email: formData.email,
         username: formData.username,
         displayName: formData.displayName,
         password: formData.password
       })
+      
       addToast({
         type: 'success',
-        title: 'Account created!',
-        message: 'Welcome to DoorTo.me! You can now start posting and connecting.'
+        title: 'Registration successful!',
+        message: result?.message || 'Please check your email to verify your account.'
+      })
+
+      // Clear the form
+      setFormData({
+        email: '',
+        username: '',
+        displayName: '',
+        password: '',
+        confirmPassword: ''
       })
     } catch (err: any) {
       addToast({
         type: 'error',
         title: 'Registration failed',
-        message: err.message || 'Please try again with different credentials'
+        message: err.message || 'Please try again'
       })
     } finally {
       setLoading(false)
@@ -88,7 +98,6 @@ export default function Register() {
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -105,7 +114,7 @@ export default function Register() {
                 onChange={handleChange}
               />
             </div>
-            
+
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700">
                 Username
@@ -121,7 +130,7 @@ export default function Register() {
                 onChange={handleChange}
               />
             </div>
-            
+
             <div>
               <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">
                 Display Name
@@ -148,12 +157,12 @@ export default function Register() {
                 type="password"
                 required
                 className="input mt-1"
-                placeholder="Choose a password"
+                placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleChange}
               />
             </div>
-            
+
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                 Confirm Password
