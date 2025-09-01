@@ -36,15 +36,40 @@ export default function Login() {
     }
   }
 
-  const handleGoogleLogin = async () => {
+  // Load Google Sign-In SDK
+  useEffect(() => {
+    const loadGoogleScript = () => {
+      if (document.getElementById('google-signin-script')) return
+      
+      const script = document.createElement('script')
+      script.id = 'google-signin-script'
+      script.src = 'https://accounts.google.com/gsi/client'
+      script.async = true
+      script.defer = true
+      document.head.appendChild(script)
+      
+      script.onload = () => {
+        if (window.google) {
+          window.google.accounts.id.initialize({
+            client_id: '1029905618491-q5cil145uba3vui0ms0q9SlmBi2u0bBg.apps.googleusercontent.com',
+            callback: handleGoogleResponse
+          })
+        }
+      }
+    }
+    
+    loadGoogleScript()
+  }, [])
+
+  const handleGoogleResponse = async (response: any) => {
     setGoogleLoading(true)
     
     try {
-      // For now, we'll use a simple approach - in production you'd integrate Google Sign-In SDK
+      await googleLogin(response.credential)
       addToast({
-        type: 'info',
-        title: 'Google Sign-In',
-        message: 'Google OAuth integration ready! Configuring Google Sign-In...'
+        type: 'success',
+        title: 'Welcome!',
+        message: 'Successfully signed in with Google'
       })
     } catch (err: any) {
       addToast({
@@ -54,6 +79,18 @@ export default function Login() {
       })
     } finally {
       setGoogleLoading(false)
+    }
+  }
+
+  const handleGoogleLogin = () => {
+    if (window.google) {
+      window.google.accounts.id.prompt()
+    } else {
+      addToast({
+        type: 'error',
+        title: 'Google Sign-In not loaded',
+        message: 'Please refresh the page and try again'
+      })
     }
   }
 
