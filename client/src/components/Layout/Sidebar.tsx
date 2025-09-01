@@ -95,7 +95,7 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-4 space-y-2">
-        {navigation.map((item) => {
+        {Array.isArray(navigation) ? navigation.map((item) => {
           const Icon = item.current ? item.activeIcon : item.icon
           return (
             <NavLink
@@ -111,7 +111,9 @@ export default function Sidebar() {
               {item.name}
             </NavLink>
           )
-        })}
+        }) : (
+          <div className="text-red-500 p-4">Navigation error</div>
+        )}
       </nav>
 
       {/* User Profile & Logout */}
