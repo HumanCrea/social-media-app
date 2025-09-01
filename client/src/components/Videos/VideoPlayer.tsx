@@ -249,9 +249,10 @@ export default function VideoPlayer({ video, isActive, onVideoEnd }: VideoPlayer
               videoRef.current.src = originalUrl
             } else if (currentSrc === originalUrl && !originalUrl.startsWith('http')) {
               // Second retry: try with /uploads/ prefix if not already there
+              const baseUrl = (import.meta as any).env?.VITE_API_URL || 'https://social-media-app-production-8dcf.up.railway.app'
               const uploadsUrl = originalUrl.startsWith('/uploads/') 
-                ? `${import.meta.env.VITE_API_URL || 'https://social-media-app-production-8dcf.up.railway.app'}${originalUrl}`
-                : `${import.meta.env.VITE_API_URL || 'https://social-media-app-production-8dcf.up.railway.app'}/uploads/${originalUrl}`
+                ? `${baseUrl}${originalUrl}`
+                : `${baseUrl}/uploads/${originalUrl}`
               
               if (uploadsUrl !== currentSrc) {
                 console.log('Retrying with uploads URL:', uploadsUrl)
