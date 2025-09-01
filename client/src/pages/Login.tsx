@@ -141,6 +141,13 @@ export default function Login() {
           </p>
         </div>
         
+        {/* Debug Info */}
+        <div className="bg-gray-100 p-3 rounded text-xs text-gray-600 mb-4">
+          <strong>Debug Info:</strong><br/>
+          Local Storage: {localStorage.getItem('auth-storage') ? '✅ Found' : '❌ Empty'}<br/>
+          Google SDK: {typeof window.google !== 'undefined' ? '✅ Loaded' : '❌ Not Loaded'}
+        </div>
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           
           <div className="space-y-4">
@@ -200,7 +207,7 @@ export default function Login() {
           </div>
 
           {/* Google Sign-In Button */}
-          <div className="mt-6">
+          <div className="mt-6 space-y-2">
             <button
               onClick={handleGoogleLogin}
               disabled={googleLoading}
@@ -214,6 +221,30 @@ export default function Login() {
               </svg>
               {googleLoading ? 'Connecting...' : 'Sign in with Google'}
             </button>
+            
+            {/* Debug Buttons */}
+            <div className="flex space-x-2">
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.clear()
+                  window.location.reload()
+                }}
+                className="flex-1 py-1 px-2 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
+              >
+                Clear Storage
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  console.log('🔍 DEBUG - localStorage:', localStorage.getItem('auth-storage'))
+                  console.log('🔍 DEBUG - window.google:', typeof window.google, window.google)
+                }}
+                className="flex-1 py-1 px-2 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+              >
+                Log State
+              </button>
+            </div>
           </div>
         </div>
       </div>
