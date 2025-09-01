@@ -44,7 +44,7 @@ export default function Login() {
       addToast({
         type: 'info',
         title: 'Google Sign-In',
-        message: 'Google OAuth integration ready! Please set up Google Client ID to enable.'
+        message: 'Google OAuth integration ready! Configuring Google Sign-In...'
       })
     } catch (err: any) {
       addToast({
