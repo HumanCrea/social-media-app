@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import axios from 'axios'
-import { useAuthStore } from '../../store/authStore'
+import { useAuthStore, getFullImageUrl } from '../../store/authStore'
 import { useToast } from '../../contexts/ToastContext'
 import { useAchievementsContext } from '../../contexts/AchievementsContext'
 import { PhotoIcon, XMarkIcon, ChartBarIcon } from '@heroicons/react/24/outline'
@@ -114,8 +114,12 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
       <div className="flex space-x-3">
         <img
           className="w-12 h-12 avatar"
-          src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.displayName}&background=3b82f6&color=fff`}
+          src={getFullImageUrl(user?.avatar) || `https://ui-avatars.com/api/?name=${user?.displayName}&background=3b82f6&color=fff`}
           alt={user?.displayName}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement
+            target.src = `https://ui-avatars.com/api/?name=${user?.displayName}&background=3b82f6&color=fff`
+          }}
         />
         
         <div className="flex-1">

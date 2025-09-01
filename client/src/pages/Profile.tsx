@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import axios from 'axios'
-import { useAuthStore } from '../store/authStore'
+import { useAuthStore, getFullImageUrl } from '../store/authStore'
 import PostCard from '../components/Posts/PostCard'
 import EditProfileModal from '../components/Modals/EditProfileModal'
 import { CalendarIcon, PencilIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline'
@@ -173,9 +173,13 @@ export default function Profile() {
         <div className="h-48 bg-gradient-to-r from-primary-400 to-primary-600 dark:from-primary-600 dark:to-primary-800">
         {profile.coverImage && (
           <img
-            src={profile.coverImage}
+            src={getFullImageUrl(profile.coverImage) || profile.coverImage}
             alt="Cover"
             className="w-full h-full object-cover"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.style.display = 'none'
+            }}
           />
         )}
       </div>
@@ -185,8 +189,12 @@ export default function Profile() {
         <div className="flex items-end justify-between -mt-16 mb-4">
           <img
             className="w-32 h-32 avatar border-4 border-white dark:border-gray-900"
-            src={profile.avatar || `https://ui-avatars.com/api/?name=${profile.displayName}&background=3b82f6&color=fff&size=128`}
+            src={getFullImageUrl(profile.avatar) || `https://ui-avatars.com/api/?name=${profile.displayName}&background=3b82f6&color=fff&size=128`}
             alt={profile.displayName}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.src = `https://ui-avatars.com/api/?name=${profile.displayName}&background=3b82f6&color=fff&size=128`
+            }}
           />
           
           <div className="mb-2 flex space-x-2">

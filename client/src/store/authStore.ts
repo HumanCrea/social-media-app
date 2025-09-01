@@ -37,8 +37,27 @@ interface RegisterData {
 
 // Temporarily hardcode Railway URL to eliminate env variable issues
 const API_URL = 'https://social-media-app-production-5216.up.railway.app/api'
+const BASE_URL = 'https://social-media-app-production-5216.up.railway.app'
 console.log('🔍 AUTH STORE DEBUG - API_URL (hardcoded):', API_URL)
 console.log('🔍 AUTH STORE DEBUG - ENV VITE_API_URL:', (import.meta as any).env?.VITE_API_URL)
+
+// Helper function to get full image URL
+export const getFullImageUrl = (imageUrl?: string): string | undefined => {
+  if (!imageUrl) return undefined
+  
+  // If it's already a full URL (starts with http), return as is
+  if (imageUrl.startsWith('http')) {
+    return imageUrl
+  }
+  
+  // If it's a relative URL (starts with /uploads), prepend base URL
+  if (imageUrl.startsWith('/uploads')) {
+    return BASE_URL + imageUrl
+  }
+  
+  // Otherwise, assume it's a filename and construct full path
+  return `${BASE_URL}/uploads/${imageUrl}`
+}
 
 // Set axios base URL to ensure all requests use the correct URL
 axios.defaults.baseURL = API_URL.replace('/api', '') // Remove /api from base since routes include it

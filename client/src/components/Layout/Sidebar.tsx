@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { useAuthStore } from '../../store/authStore'
+import { useAuthStore, getFullImageUrl } from '../../store/authStore'
 import DarkModeToggle from '../UI/DarkModeToggle'
 import { 
   HomeIcon,
@@ -121,8 +121,12 @@ export default function Sidebar() {
         <div className="flex items-center space-x-3 mb-4">
           <img
             className="w-10 h-10 avatar"
-            src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.displayName}&background=3b82f6&color=fff`}
+            src={getFullImageUrl(user?.avatar) || `https://ui-avatars.com/api/?name=${user?.displayName}&background=3b82f6&color=fff`}
             alt={user?.displayName}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.src = `https://ui-avatars.com/api/?name=${user?.displayName}&background=3b82f6&color=fff`
+            }}
           />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900 dark:text-white truncate">

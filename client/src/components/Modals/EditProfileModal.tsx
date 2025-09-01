@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { XMarkIcon, PhotoIcon, CameraIcon } from '@heroicons/react/24/outline'
 import { useToast } from '../../contexts/ToastContext'
-import { useAuthStore } from '../../store/authStore'
+import { useAuthStore, getFullImageUrl } from '../../store/authStore'
 
 interface EditProfileModalProps {
   isOpen: boolean
@@ -129,9 +129,16 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
               <div className="relative h-32 bg-gray-200 dark:bg-gray-700 rounded-xl overflow-hidden">
                 {formData.coverImage ? (
                   <img
-                    src={formData.coverImage}
+                    src={getFullImageUrl(formData.coverImage) || formData.coverImage}
                     alt="Cover"
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement
+                      // Hide the image on error and show placeholder
+                      target.style.display = 'none'
+                      const placeholder = target.nextElementSibling as HTMLElement
+                      if (placeholder) placeholder.style.display = 'flex'
+                    }}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
@@ -165,8 +172,12 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
                 <div className="relative">
                   <img
                     className="w-20 h-20 avatar"
-                    src={formData.avatar || `https://ui-avatars.com/api/?name=${formData.displayName}&background=3b82f6&color=fff`}
+                    src={getFullImageUrl(formData.avatar) || `https://ui-avatars.com/api/?name=${formData.displayName}&background=3b82f6&color=fff`}
                     alt="Avatar"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement
+                      target.src = `https://ui-avatars.com/api/?name=${formData.displayName}&background=3b82f6&color=fff`
+                    }}
                   />
                   <button
                     type="button"
