@@ -22,6 +22,7 @@ interface AuthState {
   user: User | null
   token: string | null | undefined
   login: (email: string, password: string) => Promise<void>
+  googleLogin: (token: string) => Promise<void>
   register: (data: RegisterData) => Promise<void>
   logout: () => void
   updateProfile: (data: Partial<User>) => Promise<void>
@@ -58,6 +59,23 @@ export const useAuthStore = create<AuthState>()(
           set({ user, token })
         } catch (error: any) {
           throw new Error(error.response?.data?.error || 'Login failed')
+        }
+      },
+
+      googleLogin: async (token: string) => {
+        try {
+          const response = await axios.post(`${API_URL}/auth/google`, {
+            token,
+          })
+          
+          const { user, token: authToken } = response.data
+          
+          // Set axios default header
+          axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
+          
+          set({ user, token: authToken })
+        } catch (error: any) {
+          throw new Error(error.response?.data?.error || 'Google login failed')
         }
       },
 

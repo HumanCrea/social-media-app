@@ -2,11 +2,15 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import { OAuth2Client } from 'google-auth-library';
 import { prisma } from '../index';
 import { EmailService } from '../services/emailService';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
+// Initialize Google OAuth client
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -213,6 +217,72 @@ router.post('/resend-verification', async (req, res) => {
     res.json({ message: 'Verification email sent! Please check your inbox.' });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Google OAuth login
+router.post('/google', async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ error: 'Google token is required' });
+    }
+
+    // Verify the Google token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) {
+      return res.status(400).json({ error: 'Invalid Google token' });
+    }
+
+    const { email, name, picture, sub: googleId } = payload;
+
+    // Check if user exists
+    let user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      // Create new user from Google data
+      const username = email.split('@')[0] + Math.random().toString(36).substr(2, 4);
+      
+      user = await prisma.user.create({
+        data: {
+          email,
+          username,
+          displayName: name || 'User',
+          password: '', // No password for Google users
+          avatar: picture,
+          emailVerified: true, // Google accounts are pre-verified
+        },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          displayName: true,
+          avatar: true,
+          emailVerified: true,
+          createdAt: true
+        }
+      });
+    }
+
+    // Generate JWT
+    const jwtToken = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+
+    res.json({ 
+      user,
+      token: jwtToken,
+      message: 'Login successful!'
+    });
+  } catch (error) {
+    console.error('Google OAuth error:', error);
+    res.status(500).json({ error: 'Authentication failed' });
   }
 });
 

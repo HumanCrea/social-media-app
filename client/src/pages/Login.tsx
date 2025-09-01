@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { useToast } from '../contexts/ToastContext'
@@ -7,9 +7,11 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const { addToast } = useToast()
   
   const login = useAuthStore(state => state.login)
+  const googleLogin = useAuthStore(state => state.googleLogin)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
