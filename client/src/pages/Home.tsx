@@ -53,17 +53,24 @@ export default function Home() {
   } = useQuery({
     queryKey: ['posts', 'feed'],
     queryFn: async () => {
-      const response = await axios.get('/api/posts/feed')
-      
-      // Check if response contains an error
-      if (response.data && typeof response.data === 'object' && 'error' in response.data) {
-        throw new Error(response.data.error)
+      try {
+        const response = await axios.get('/api/posts/feed')
+        
+        // Check if response contains an error
+        if (response.data && typeof response.data === 'object' && 'error' in response.data) {
+          throw new Error(response.data.error)
+        }
+        
+        // Ensure we return an array
+        return Array.isArray(response.data) ? response.data as Post[] : []
+      } catch (error) {
+        console.error('Feed posts error:', error)
+        return []
       }
-      
-      // Ensure we return an array
-      return Array.isArray(response.data) ? response.data as Post[] : []
     },
-    enabled: activeTab === 'feed'
+    enabled: activeTab === 'feed',
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
   // Fetch public timeline
@@ -74,17 +81,24 @@ export default function Home() {
   } = useQuery({
     queryKey: ['posts', 'public'],
     queryFn: async () => {
-      const response = await axios.get('/api/posts')
-      
-      // Check if response contains an error
-      if (response.data && typeof response.data === 'object' && 'error' in response.data) {
-        throw new Error(response.data.error)
+      try {
+        const response = await axios.get('/api/posts')
+        
+        // Check if response contains an error
+        if (response.data && typeof response.data === 'object' && 'error' in response.data) {
+          throw new Error(response.data.error)
+        }
+        
+        // Ensure we return an array
+        return Array.isArray(response.data) ? response.data as Post[] : []
+      } catch (error) {
+        console.error('Public posts error:', error)
+        return []
       }
-      
-      // Ensure we return an array
-      return Array.isArray(response.data) ? response.data as Post[] : []
     },
-    enabled: activeTab === 'public'
+    enabled: activeTab === 'public',
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
   // Like/unlike mutation
@@ -194,24 +208,33 @@ export default function Home() {
             </p>
           </div>
         ) : (
-          Array.isArray(posts) ? posts.map((item) => {
-            if (item.type === 'poll') {
+          Array.isArray(posts) ? posts.filter(item => item && item.id).map((item) => {
+            try {
+              if (item.type === 'poll') {
+                return (
+                  <PollCard
+                    key={item.id}
+                    poll={item as any}
+                    currentUserId={user?.id}
+                  />
+                )
+              } else {
+                return (
+                  <PostCard
+                    key={item.id}
+                    post={item}
+                    onLike={handleLike}
+                    onComment={() => handleComment(item)}
+                    currentUserId={user?.id}
+                  />
+                )
+              }
+            } catch (error) {
+              console.error('Error rendering post:', error, item)
               return (
-                <PollCard
-                  key={item.id}
-                  poll={item as any}
-                  currentUserId={user?.id}
-                />
-              )
-            } else {
-              return (
-                <PostCard
-                  key={item.id}
-                  post={item}
-                  onLike={handleLike}
-                  onComment={() => handleComment(item)}
-                  currentUserId={user?.id}
-                />
+                <div key={item.id} className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <p className="text-red-600 text-sm">Failed to render post</p>
+                </div>
               )
             }
           }) : (
