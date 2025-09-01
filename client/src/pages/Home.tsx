@@ -54,7 +54,14 @@ export default function Home() {
     queryKey: ['posts', 'feed'],
     queryFn: async () => {
       const response = await axios.get('/api/posts/feed')
-      return response.data as Post[]
+      
+      // Check if response contains an error
+      if (response.data && typeof response.data === 'object' && 'error' in response.data) {
+        throw new Error(response.data.error)
+      }
+      
+      // Ensure we return an array
+      return Array.isArray(response.data) ? response.data as Post[] : []
     },
     enabled: activeTab === 'feed'
   })
@@ -68,7 +75,14 @@ export default function Home() {
     queryKey: ['posts', 'public'],
     queryFn: async () => {
       const response = await axios.get('/api/posts')
-      return response.data as Post[]
+      
+      // Check if response contains an error
+      if (response.data && typeof response.data === 'object' && 'error' in response.data) {
+        throw new Error(response.data.error)
+      }
+      
+      // Ensure we return an array
+      return Array.isArray(response.data) ? response.data as Post[] : []
     },
     enabled: activeTab === 'public'
   })

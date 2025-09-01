@@ -16,7 +16,14 @@ export default function TrendingSidebar() {
     queryKey: ['trending-hashtags'],
     queryFn: async () => {
       const response = await axios.get('/api/hashtags/trending?limit=10')
-      return response.data as Hashtag[]
+      
+      // Check if response contains an error
+      if (response.data && typeof response.data === 'object' && 'error' in response.data) {
+        throw new Error(response.data.error)
+      }
+      
+      // Ensure we return an array
+      return Array.isArray(response.data) ? response.data as Hashtag[] : []
     }
   })
 

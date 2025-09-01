@@ -37,16 +37,20 @@ export default function Login() {
   }
 
   const handleGoogleResponse = useCallback(async (response: any) => {
+    console.log('🔍 GOOGLE DEBUG - Response received:', response)
     setGoogleLoading(true)
     
     try {
+      console.log('🔍 GOOGLE DEBUG - Calling googleLogin with credential')
       await googleLogin(response.credential)
+      console.log('🔍 GOOGLE DEBUG - Google login successful')
       addToast({
         type: 'success',
         title: 'Welcome!',
         message: 'Successfully signed in with Google'
       })
     } catch (err: any) {
+      console.error('🔍 GOOGLE DEBUG - Google login failed:', err)
       addToast({
         type: 'error',
         title: 'Google login failed',
@@ -70,12 +74,21 @@ export default function Login() {
       document.head.appendChild(script)
       
       script.onload = () => {
+        console.log('🔍 GOOGLE DEBUG - Script loaded')
         if (window.google) {
+          console.log('🔍 GOOGLE DEBUG - Google object available')
           window.google.accounts.id.initialize({
             client_id: '1029905618491-q5cil145uba3vui0ms0q9SlmBi2u0bBg.apps.googleusercontent.com',
             callback: handleGoogleResponse
           })
+          console.log('🔍 GOOGLE DEBUG - Google initialized')
+        } else {
+          console.error('🔍 GOOGLE DEBUG - Google object not found')
         }
+      }
+      
+      script.onerror = () => {
+        console.error('🔍 GOOGLE DEBUG - Failed to load Google script')
       }
     }
     
@@ -83,9 +96,14 @@ export default function Login() {
   }, [handleGoogleResponse])
 
   const handleGoogleLogin = () => {
+    console.log('🔍 GOOGLE DEBUG - Google login clicked')
+    console.log('🔍 GOOGLE DEBUG - Window.google available:', !!window.google)
+    
     if (window.google) {
+      console.log('🔍 GOOGLE DEBUG - Prompting Google login')
       window.google.accounts.id.prompt()
     } else {
+      console.error('🔍 GOOGLE DEBUG - Google not loaded')
       addToast({
         type: 'error',
         title: 'Google Sign-In not loaded',
