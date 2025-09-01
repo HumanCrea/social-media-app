@@ -311,10 +311,12 @@ export default function VideoPlayer({ video, isActive, onVideoEnd }: VideoPlayer
       {/* Error Indicator */}
       {videoError && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-          <div className="bg-red-900 bg-opacity-90 rounded-lg p-6 text-white text-center max-w-xs">
+          <div className="bg-red-900 bg-opacity-90 rounded-lg p-6 text-white text-center max-w-sm">
             <div className="text-4xl mb-4">⚠️</div>
             <p className="text-sm mb-2">Video failed to load</p>
-            <p className="text-xs text-gray-300">Check your connection or try refreshing</p>
+            <p className="text-xs text-gray-300 mb-2">Video ID: {video.id}</p>
+            <p className="text-xs text-gray-300 mb-2">URL: {video.videoUrl}</p>
+            <p className="text-xs text-gray-300">Check console for more details</p>
           </div>
         </div>
       )}
