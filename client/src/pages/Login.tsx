@@ -64,8 +64,12 @@ export default function Login() {
   // Load Google Sign-In SDK
   useEffect(() => {
     const loadGoogleScript = () => {
-      if (document.getElementById('google-signin-script')) return
+      if (document.getElementById('google-signin-script')) {
+        console.log('🔍 GOOGLE DEBUG - Script already exists')
+        return
+      }
       
+      console.log('🔍 GOOGLE DEBUG - Loading Google script')
       const script = document.createElement('script')
       script.id = 'google-signin-script'
       script.src = 'https://accounts.google.com/gsi/client'
@@ -74,17 +78,24 @@ export default function Login() {
       document.head.appendChild(script)
       
       script.onload = () => {
-        console.log('🔍 GOOGLE DEBUG - Script loaded')
-        if (window.google) {
-          console.log('🔍 GOOGLE DEBUG - Google object available')
-          window.google.accounts.id.initialize({
-            client_id: '1029905618491-q5cil145uba3vui0ms0q9SlmBi2u0bBg.apps.googleusercontent.com',
-            callback: handleGoogleResponse
-          })
-          console.log('🔍 GOOGLE DEBUG - Google initialized')
-        } else {
-          console.error('🔍 GOOGLE DEBUG - Google object not found')
-        }
+        console.log('🔍 GOOGLE DEBUG - Script loaded successfully')
+        // Add a small delay to ensure Google object is fully loaded
+        setTimeout(() => {
+          if (window.google) {
+            console.log('🔍 GOOGLE DEBUG - Google object available, initializing...')
+            try {
+              window.google.accounts.id.initialize({
+                client_id: '1029905618491-q5cil145uba3vui0ms0q9SlmBi2u0bBg.apps.googleusercontent.com',
+                callback: handleGoogleResponse
+              })
+              console.log('🔍 GOOGLE DEBUG - Google initialized successfully')
+            } catch (error) {
+              console.error('🔍 GOOGLE DEBUG - Error initializing Google:', error)
+            }
+          } else {
+            console.error('🔍 GOOGLE DEBUG - Google object not found after script load')
+          }
+        }, 100)
       }
       
       script.onerror = () => {

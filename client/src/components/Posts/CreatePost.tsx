@@ -25,6 +25,12 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
   const createPostMutation = useMutation({
     mutationFn: async (data: { content: string; imageUrl?: string }) => {
       const response = await axios.post('/api/posts', data)
+      
+      // Check if response contains an error
+      if (response.data && typeof response.data === 'object' && 'error' in response.data) {
+        throw new Error(response.data.error)
+      }
+      
       return response.data
     },
     onSuccess: () => {
@@ -40,11 +46,12 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
       // Check for new achievements
       setTimeout(() => checkAchievements(), 500)
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('🔍 CREATE POST DEBUG - Error:', error)
       addToast({
         type: 'error',
         title: 'Failed to create post',
-        message: 'Please try again later'
+        message: error.message || 'Please try again later'
       })
     }
   })

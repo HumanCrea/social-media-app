@@ -44,8 +44,11 @@ console.log('🔍 AUTH STORE DEBUG - ENV VITE_API_URL:', (import.meta as any).en
 // Add axios request interceptor for debugging
 axios.interceptors.request.use(
   (config) => {
-    console.log('🔍 AXIOS REQUEST DEBUG - URL:', config.url)
-    console.log('🔍 AXIOS REQUEST DEBUG - Headers:', config.headers)
+    const hasAuth = config.headers?.Authorization
+    console.log('🔍 AXIOS REQUEST - URL:', config.url, hasAuth ? '✅ Auth' : '❌ No Auth')
+    if (!hasAuth && config.url?.includes('/api/')) {
+      console.warn('🔍 AXIOS WARNING - API request without auth token!')
+    }
     return config
   },
   (error) => {
@@ -57,14 +60,14 @@ axios.interceptors.request.use(
 // Add axios response interceptor for debugging
 axios.interceptors.response.use(
   (response) => {
-    console.log('🔍 AXIOS RESPONSE DEBUG - URL:', response.config.url)
-    console.log('🔍 AXIOS RESPONSE DEBUG - Status:', response.status)
-    console.log('🔍 AXIOS RESPONSE DEBUG - Data type:', typeof response.data)
-    console.log('🔍 AXIOS RESPONSE DEBUG - Data:', response.data)
+    const isError = response.data && typeof response.data === 'object' && 'error' in response.data
+    console.log('🔍 AXIOS RESPONSE - URL:', response.config.url, 
+      isError ? '❌ Error' : '✅ Success', 
+      isError ? response.data.error : `(${typeof response.data})`)
     return response
   },
   (error) => {
-    console.error('🔍 AXIOS RESPONSE ERROR:', error.response?.data || error.message)
+    console.error('🔍 AXIOS RESPONSE ERROR - URL:', error.config?.url, '- Error:', error.response?.data || error.message)
     return Promise.reject(error)
   }
 )
