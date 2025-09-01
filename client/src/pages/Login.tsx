@@ -61,45 +61,75 @@ export default function Login() {
     }
   }, [googleLogin, addToast])
 
-  // Load Google Sign-In SDK
+  // Load Google Sign-In SDK with retry mechanism
   useEffect(() => {
+    let retryCount = 0
+    const maxRetries = 3
+    
     const loadGoogleScript = () => {
       if (document.getElementById('google-signin-script')) {
-        console.log('🔍 GOOGLE DEBUG - Script already exists')
-        return
+        console.log('🔍 GOOGLE DEBUG - Script already exists, checking status...')
+        // Check if Google object is available
+        if (window.google?.accounts?.id) {
+          console.log('🔍 GOOGLE DEBUG - Google already initialized')
+          return
+        }
       }
       
-      console.log('🔍 GOOGLE DEBUG - Loading Google script')
+      console.log('🔍 GOOGLE DEBUG - Loading Google script (attempt', retryCount + 1, ')')
+      
+      // Remove existing script if it failed
+      const existingScript = document.getElementById('google-signin-script')
+      if (existingScript) {
+        existingScript.remove()
+      }
+      
       const script = document.createElement('script')
       script.id = 'google-signin-script'
       script.src = 'https://accounts.google.com/gsi/client'
-      script.async = true
-      script.defer = true
+      script.async = false // Try synchronous loading
       document.head.appendChild(script)
       
       script.onload = () => {
         console.log('🔍 GOOGLE DEBUG - Script loaded successfully')
-        // Add a small delay to ensure Google object is fully loaded
-        setTimeout(() => {
-          if (window.google) {
+        
+        // Poll for Google object with timeout
+        let pollCount = 0
+        const maxPolls = 20
+        
+        const pollForGoogle = () => {
+          pollCount++
+          if (window.google?.accounts?.id) {
             console.log('🔍 GOOGLE DEBUG - Google object available, initializing...')
             try {
               window.google.accounts.id.initialize({
                 client_id: '1029905618491-q5cil145uba3vui0ms0q9SlmBi2u0bBg.apps.googleusercontent.com',
                 callback: handleGoogleResponse
               })
-              console.log('🔍 GOOGLE DEBUG - Google initialized successfully')
+              console.log('🔍 GOOGLE DEBUG - ✅ Google initialized successfully')
             } catch (error) {
               console.error('🔍 GOOGLE DEBUG - Error initializing Google:', error)
             }
+          } else if (pollCount < maxPolls) {
+            console.log('🔍 GOOGLE DEBUG - Waiting for Google object... (', pollCount, '/', maxPolls, ')')
+            setTimeout(pollForGoogle, 100)
           } else {
-            console.error('🔍 GOOGLE DEBUG - Google object not found after script load')
+            console.error('🔍 GOOGLE DEBUG - Google object not found after polling')
           }
-        }, 100)
+        }
+        
+        pollForGoogle()
       }
       
       script.onerror = () => {
         console.error('🔍 GOOGLE DEBUG - Failed to load Google script')
+        retryCount++
+        if (retryCount < maxRetries) {
+          console.log('🔍 GOOGLE DEBUG - Retrying in 2 seconds...')
+          setTimeout(loadGoogleScript, 2000)
+        } else {
+          console.error('🔍 GOOGLE DEBUG - Max retries reached, giving up')
+        }
       }
     }
     
@@ -145,7 +175,8 @@ export default function Login() {
         <div className="bg-gray-100 p-3 rounded text-xs text-gray-600 mb-4">
           <strong>Debug Info:</strong><br/>
           Local Storage: {localStorage.getItem('auth-storage') ? '✅ Found' : '❌ Empty'}<br/>
-          Google SDK: {typeof window.google !== 'undefined' ? '✅ Loaded' : '❌ Not Loaded'}
+          Google SDK: {window.google?.accounts?.id ? '✅ Loaded & Ready' : 
+                      typeof window.google !== 'undefined' ? '⚠️ Loading...' : '❌ Not Loaded'}
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
