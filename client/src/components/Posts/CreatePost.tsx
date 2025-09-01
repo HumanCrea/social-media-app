@@ -20,7 +20,8 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { user } = useAuthStore()
   const { addToast } = useToast()
-  const { checkAchievements } = useAchievementsContext()
+  const achievementsContext = useAchievementsContext()
+  const checkAchievements = achievementsContext?.checkAchievements
 
   const createPostMutation = useMutation({
     mutationFn: async (data: { content: string; imageUrl?: string }) => {
@@ -44,7 +45,9 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
       })
       onPostCreated()
       // Check for new achievements
-      setTimeout(() => checkAchievements(), 500)
+      if (checkAchievements) {
+        setTimeout(() => checkAchievements(), 500)
+      }
     },
     onError: (error: any) => {
       console.error('🔍 CREATE POST DEBUG - Error:', error)

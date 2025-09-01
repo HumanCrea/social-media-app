@@ -18,6 +18,7 @@ import {
 } from '@heroicons/react/24/solid'
 import { formatDistanceToNow } from 'date-fns'
 import VideoCommentsModal from './VideoCommentsModal'
+import { getFullImageUrl } from '../../store/authStore'
 
 interface Video {
   id: string
@@ -198,12 +199,16 @@ export default function VideoPlayer({ video, isActive, onVideoEnd }: VideoPlayer
       {/* Video */}
       <video
         ref={videoRef}
-        src={video.videoUrl}
+        src={getFullImageUrl(video.videoUrl) || video.videoUrl}
         className="max-h-full max-w-full object-contain"
         loop
         muted={isMuted}
         playsInline
-        poster={video.thumbnailUrl}
+        poster={getFullImageUrl(video.thumbnailUrl) || video.thumbnailUrl}
+        onError={(e) => {
+          console.error('Video failed to load:', video.videoUrl)
+          console.error('Attempted URL:', getFullImageUrl(video.videoUrl) || video.videoUrl)
+        }}
       />
 
       {/* YouTube-Style Progress Bar */}
@@ -252,8 +257,12 @@ export default function VideoPlayer({ video, isActive, onVideoEnd }: VideoPlayer
           <Link to={`/profile/${video.author.username}`}>
             <img
               className="w-10 h-10 rounded-full"
-              src={video.author.avatar || `https://ui-avatars.com/api/?name=${video.author.displayName}&background=3b82f6&color=fff`}
+              src={getFullImageUrl(video.author.avatar) || `https://ui-avatars.com/api/?name=${video.author.displayName}&background=3b82f6&color=fff`}
               alt={video.author.displayName}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement
+                target.src = `https://ui-avatars.com/api/?name=${video.author.displayName}&background=3b82f6&color=fff`
+              }}
             />
           </Link>
           <div className="flex-1 min-w-0">

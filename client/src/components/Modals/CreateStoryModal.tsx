@@ -20,7 +20,8 @@ export default function CreateStoryModal({ isOpen, onClose }: CreateStoryModalPr
   const { addToast } = useToast()
   const { user } = useAuthStore()
   const queryClient = useQueryClient()
-  const { checkAchievements } = useAchievementsContext()
+  const achievementsContext = useAchievementsContext()
+  const checkAchievements = achievementsContext?.checkAchievements
 
   const createStoryMutation = useMutation({
     mutationFn: async (data: { mediaUrl?: string; text?: string; mediaType?: string }) => {
@@ -37,7 +38,9 @@ export default function CreateStoryModal({ isOpen, onClose }: CreateStoryModalPr
       handleReset()
       onClose()
       // Check for new achievements
-      setTimeout(() => checkAchievements(), 500)
+      if (checkAchievements) {
+        setTimeout(() => checkAchievements(), 500)
+      }
     },
     onError: (error) => {
       addToast({

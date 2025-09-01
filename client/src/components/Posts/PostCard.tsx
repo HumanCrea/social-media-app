@@ -8,6 +8,7 @@ import OnlineStatus from '../UI/OnlineStatus'
 import EditPostModal from '../Modals/EditPostModal'
 import ReportModal from '../Modals/ReportModal'
 import LiveReactions from '../Reactions/LiveReactions'
+import { getFullImageUrl } from '../../store/authStore'
 
 interface Post {
   id: string
@@ -110,8 +111,12 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
           <Link to={`/profile/${post.author.username}`} className="flex-shrink-0 relative">
             <img
               className="w-12 h-12 avatar"
-              src={post.author.avatar || `https://ui-avatars.com/api/?name=${post.author.displayName}&background=3b82f6&color=fff`}
+              src={getFullImageUrl(post.author.avatar) || `https://ui-avatars.com/api/?name=${post.author.displayName}&background=3b82f6&color=fff`}
               alt={post.author.displayName}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement
+                target.src = `https://ui-avatars.com/api/?name=${post.author.displayName}&background=3b82f6&color=fff`
+              }}
             />
             <div className="absolute -bottom-1 -right-1">
               <OnlineStatus isOnline={isOnline} size="md" />
