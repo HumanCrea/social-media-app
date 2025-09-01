@@ -109,7 +109,7 @@ export default function Register() {
                 type="email"
                 required
                 className="input mt-1"
-                placeholder="Enter your email"
+                placeholder="Enter your email address"
                 value={formData.email}
                 onChange={handleChange}
               />
