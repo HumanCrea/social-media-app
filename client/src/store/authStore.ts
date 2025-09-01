@@ -165,15 +165,21 @@ export const useAuthStore = create<AuthState>()(
 
       initializeAuth: () => {
         const state = get()
-        console.log('🔍 INIT AUTH DEBUG - Token:', state.token)
-        console.log('🔍 INIT AUTH DEBUG - User:', state.user)
-        if (state.token && state.token !== null) {
+        console.log('🔍 INIT AUTH DEBUG - Raw state from storage:', state)
+        console.log('🔍 INIT AUTH DEBUG - Token exists:', !!state.token)
+        console.log('🔍 INIT AUTH DEBUG - Token type:', typeof state.token)
+        console.log('🔍 INIT AUTH DEBUG - User exists:', !!state.user)
+        
+        if (state.token && state.token !== null && state.user) {
           // Set axios default header on app initialization
           axios.defaults.headers.common['Authorization'] = `Bearer ${state.token}`
-          console.log('🔍 INIT AUTH DEBUG - Set authorization header')
+          console.log('🔍 INIT AUTH DEBUG - ✅ Set authorization header')
         } else {
-          console.log('🔍 INIT AUTH DEBUG - No token, clearing auth')
-          set({ token: null })
+          console.log('🔍 INIT AUTH DEBUG - ❌ No valid auth, clearing state')
+          console.log('🔍 INIT AUTH DEBUG - Missing token:', !state.token)
+          console.log('🔍 INIT AUTH DEBUG - Missing user:', !state.user)
+          set({ token: null, user: null })
+          delete axios.defaults.headers.common['Authorization']
         }
       },
     }),

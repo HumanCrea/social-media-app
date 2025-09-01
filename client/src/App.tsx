@@ -27,8 +27,17 @@ function App() {
 
   useEffect(() => {
     // Initialize auth on app start
+    console.log('🔍 APP DEBUG - Initializing auth...')
     initializeAuth()
   }, [initializeAuth])
+
+  // Debug auth state
+  useEffect(() => {
+    console.log('🔍 APP DEBUG - Auth state changed:')
+    console.log('🔍 APP DEBUG - User:', !!user, user?.username)
+    console.log('🔍 APP DEBUG - Token:', !!token, typeof token)
+    console.log('🔍 APP DEBUG - Will redirect to login:', (!user || !token))
+  }, [user, token])
 
   useEffect(() => {
     // Connect to socket when authenticated
