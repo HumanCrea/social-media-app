@@ -22,7 +22,6 @@ interface AuthState {
   user: User | null
   token: string | null | undefined
   login: (email: string, password: string) => Promise<void>
-  googleLogin: (token: string) => Promise<void>
   register: (data: RegisterData) => Promise<{message: string, user?: any}>
   logout: () => void
   updateProfile: (data: Partial<User>) => Promise<void>
@@ -103,29 +102,6 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      googleLogin: async (token: string) => {
-        try {
-          console.log('🔍 GOOGLE LOGIN DEBUG - Making request to:', `${API_URL}/auth/google`)
-          console.log('🔍 GOOGLE LOGIN DEBUG - Token length:', token?.length)
-          
-          const response = await axios.post(`${API_URL}/auth/google`, {
-            token,
-          })
-          
-          console.log('🔍 GOOGLE LOGIN DEBUG - Response:', response.data)
-          const { user, token: authToken } = response.data
-          
-          // Set axios default header
-          axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
-          
-          set({ user, token: authToken })
-          console.log('🔍 GOOGLE LOGIN DEBUG - Login successful')
-        } catch (error: any) {
-          console.error('🔍 GOOGLE LOGIN DEBUG - Error:', error)
-          console.error('🔍 GOOGLE LOGIN DEBUG - Response error:', error.response?.data)
-          throw new Error(error.response?.data?.error || 'Google login failed')
-        }
-      },
 
       register: async (data: RegisterData) => {
         try {

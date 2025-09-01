@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
+import { useLocation } from 'react-router-dom'
 import { useSocketStore } from '../store/socketStore'
 import { useAuthStore } from '../store/authStore'
 import { formatDistanceToNow } from 'date-fns'
@@ -37,7 +38,10 @@ interface Message {
 }
 
 export default function Messages() {
-  const [selectedChat, setSelectedChat] = useState<string | null>(null)
+  const location = useLocation()
+  const [selectedChat, setSelectedChat] = useState<string | null>(
+    location.state?.selectedChatId || null
+  )
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set())

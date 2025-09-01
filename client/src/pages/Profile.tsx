@@ -1,11 +1,11 @@
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import axios from 'axios'
 import { useAuthStore } from '../store/authStore'
 import PostCard from '../components/Posts/PostCard'
 import EditProfileModal from '../components/Modals/EditProfileModal'
-import { CalendarIcon, PencilIcon } from '@heroicons/react/24/outline'
+import { CalendarIcon, PencilIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline'
 import { formatDistanceToNow } from 'date-fns'
 
 interface UserProfile {
@@ -43,6 +43,7 @@ interface Post {
 
 export default function Profile() {
   const { username } = useParams()
+  const navigate = useNavigate()
   const { user: currentUser } = useAuthStore()
   const queryClient = useQueryClient()
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -129,6 +130,24 @@ export default function Profile() {
     console.log('Like post:', postId)
   }
 
+  const handleMessage = async () => {
+    if (!profile) return
+    
+    try {
+      // Create or get existing chat with this user
+      const response = await axios.post('/api/chats', {
+        participantIds: [profile.id]
+      })
+      
+      const chatId = response.data.id
+      navigate('/messages', { state: { selectedChatId: chatId } })
+    } catch (error) {
+      console.error('Failed to create/get chat:', error)
+      // Fallback: just navigate to messages page
+      navigate('/messages')
+    }
+  }
+
   if (profileLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -170,7 +189,7 @@ export default function Profile() {
             alt={profile.displayName}
           />
           
-          <div className="mb-2">
+          <div className="mb-2 flex space-x-2">
             {isOwnProfile ? (
               <button
                 onClick={handleEditProfile}
@@ -180,22 +199,31 @@ export default function Profile() {
                 <span>Edit Profile</span>
               </button>
             ) : (
-              <button
-                onClick={handleFollow}
-                disabled={followMutation.isPending || unfollowMutation.isPending}
-                className={`px-4 py-2 rounded-xl font-medium transition-colors disabled:opacity-50 ${
-                  isFollowing
-                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600'
-                    : 'btn-primary'
-                }`}
-              >
-                {followMutation.isPending || unfollowMutation.isPending
-                  ? 'Loading...'
-                  : isFollowing
-                  ? 'Following'
-                  : 'Follow'
-                }
-              </button>
+              <>
+                <button
+                  onClick={handleFollow}
+                  disabled={followMutation.isPending || unfollowMutation.isPending}
+                  className={`px-4 py-2 rounded-xl font-medium transition-colors disabled:opacity-50 ${
+                    isFollowing
+                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600'
+                      : 'btn-primary'
+                  }`}
+                >
+                  {followMutation.isPending || unfollowMutation.isPending
+                    ? 'Loading...'
+                    : isFollowing
+                    ? 'Following'
+                    : 'Follow'
+                  }
+                </button>
+                <button
+                  onClick={handleMessage}
+                  className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <ChatBubbleLeftRightIcon className="w-4 h-4" />
+                  <span>Message</span>
+                </button>
+              </>
             )}
           </div>
         </div>

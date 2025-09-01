@@ -23,12 +23,18 @@ export default function Search() {
   const queryClient = useQueryClient()
 
   // Search users
-  const { data: users = [], isLoading: usersLoading } = useQuery({
+  const { data: users = [], isLoading: usersLoading, error: usersError } = useQuery({
     queryKey: ['search', 'users', searchQuery],
     queryFn: async () => {
       if (!searchQuery.trim()) return []
       const response = await axios.get(`/api/users/search/${encodeURIComponent(searchQuery)}`)
-      return response.data as User[]
+      
+      // Check if response contains an error
+      if (response.data && typeof response.data === 'object' && 'error' in response.data) {
+        throw new Error(response.data.error)
+      }
+      
+      return Array.isArray(response.data) ? response.data : []
     },
     enabled: searchQuery.length > 2 && activeTab === 'users'
   })
@@ -200,6 +206,12 @@ export default function Search() {
             {isLoading ? (
               <div className="flex justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              </div>
+            ) : usersError ? (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">⚠️</div>
+                <p className="text-red-500 text-lg">Search Error</p>
+                <p className="text-gray-400">Please try again or check your connection</p>
               </div>
             ) : results.length === 0 ? (
               <div className="text-center py-12">

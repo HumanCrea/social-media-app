@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
+import { Link } from 'react-router-dom'
 import { XMarkIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline'
 import { formatDistanceToNow } from 'date-fns'
 import { useAuthStore } from '../../store/authStore'
@@ -108,19 +109,27 @@ export default function VideoCommentsModal({ videoId, isOpen, onClose }: VideoCo
 
           {data?.comments?.map((comment) => (
             <div key={comment.id} className="flex space-x-3">
-              <img
-                className="w-8 h-8 rounded-full flex-shrink-0"
-                src={comment.author.avatar || `https://ui-avatars.com/api/?name=${comment.author.displayName}&background=3b82f6&color=fff`}
-                alt={comment.author.displayName}
-              />
+              <Link to={`/profile/${comment.author.username}`} className="flex-shrink-0">
+                <img
+                  className="w-8 h-8 rounded-full hover:ring-2 hover:ring-primary-500 transition-all cursor-pointer"
+                  src={comment.author.avatar || `https://ui-avatars.com/api/?name=${comment.author.displayName}&background=3b82f6&color=fff`}
+                  alt={comment.author.displayName}
+                />
+              </Link>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center space-x-2">
-                  <span className="font-semibold text-sm text-gray-900 dark:text-white">
+                  <Link 
+                    to={`/profile/${comment.author.username}`}
+                    className="font-semibold text-sm text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                  >
                     {comment.author.displayName}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                  </Link>
+                  <Link 
+                    to={`/profile/${comment.author.username}`}
+                    className="text-xs text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                  >
                     @{comment.author.username}
-                  </span>
+                  </Link>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                   </span>

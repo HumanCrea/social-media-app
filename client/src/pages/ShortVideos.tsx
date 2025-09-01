@@ -63,6 +63,12 @@ export default function ShortVideos() {
       params.set('limit', '10')
       
       const response = await axios.get(`/api/videos/feed?${params}`)
+      
+      // Check if response contains an error
+      if (response.data && typeof response.data === 'object' && 'error' in response.data) {
+        throw new Error(response.data.error)
+      }
+      
       return response.data as VideosResponse
     },
     getNextPageParam: (lastPage: VideosResponse) => lastPage.nextCursor,

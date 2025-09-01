@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
+import { Link } from 'react-router-dom'
 import { XMarkIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline'
 import { HeartIcon } from '@heroicons/react/24/solid'
 import { useAuthStore } from '../../store/authStore'
@@ -174,20 +175,28 @@ export default function CommentModal({ isOpen, onClose, post, onLike }: CommentM
             <div className="space-y-4">
               {comments.map((comment) => (
                 <div key={comment.id} className="flex space-x-3">
-                  <img
-                    className="w-10 h-10 avatar"
-                    src={comment.author.avatar || `https://ui-avatars.com/api/?name=${comment.author.displayName}&background=3b82f6&color=fff`}
-                    alt={comment.author.displayName}
-                  />
+                  <Link to={`/profile/${comment.author.username}`} className="flex-shrink-0">
+                    <img
+                      className="w-10 h-10 avatar hover:ring-2 hover:ring-primary-500 transition-all cursor-pointer"
+                      src={comment.author.avatar || `https://ui-avatars.com/api/?name=${comment.author.displayName}&background=3b82f6&color=fff`}
+                      alt={comment.author.displayName}
+                    />
+                  </Link>
                   <div className="flex-1">
                     <div className="bg-gray-50 rounded-2xl px-4 py-3">
                       <div className="flex items-center space-x-2 mb-1">
-                        <span className="font-medium text-gray-900 text-sm">
+                        <Link 
+                          to={`/profile/${comment.author.username}`}
+                          className="font-medium text-gray-900 text-sm hover:text-primary-600 transition-colors"
+                        >
                           {comment.author.displayName}
-                        </span>
-                        <span className="text-gray-500 text-sm">
+                        </Link>
+                        <Link 
+                          to={`/profile/${comment.author.username}`}
+                          className="text-gray-500 text-sm hover:text-primary-600 transition-colors"
+                        >
                           @{comment.author.username}
-                        </span>
+                        </Link>
                       </div>
                       <p className="text-gray-900">{comment.content}</p>
                     </div>
