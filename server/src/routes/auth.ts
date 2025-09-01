@@ -244,7 +244,16 @@ router.post('/google', async (req, res) => {
 
     // Check if user exists
     let user = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        displayName: true,
+        avatar: true,
+        emailVerified: true,
+        createdAt: true
+      }
     });
 
     if (!user) {
@@ -259,6 +268,10 @@ router.post('/google', async (req, res) => {
           password: '', // No password for Google users
           avatar: picture,
           emailVerified: true, // Google accounts are pre-verified
+          bio: null,
+          coverImage: null,
+          verificationToken: null,
+          verificationTokenExpires: null
         },
         select: {
           id: true,
