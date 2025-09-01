@@ -254,4 +254,41 @@ router.get('/:userId/following', async (req, res) => {
   }
 });
 
+// Get suggested users (users not followed by current user)
+router.get('/suggested', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const currentUserId = req.user!.id;
+    const limit = parseInt(req.query.limit as string) || 5;
+
+    // Get users that the current user is not following
+    const suggestedUsers = await prisma.user.findMany({
+      where: {
+        id: {
+          not: currentUserId
+        },
+        followers: {
+          none: {
+            followerId: currentUserId
+          }
+        }
+      },
+      select: {
+        id: true,
+        username: true,
+        displayName: true,
+        avatar: true,
+        bio: true
+      },
+      take: limit,
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.json(suggestedUsers);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 export default router;
