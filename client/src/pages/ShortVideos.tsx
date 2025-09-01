@@ -206,14 +206,24 @@ export default function ShortVideos() {
   if (isError) {
     return (
       <div className="h-screen w-full bg-black flex items-center justify-center">
-        <div className="text-white text-center">
-          <p className="text-xl mb-4">Failed to load videos</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            Try Again
-          </button>
+        <div className="text-white text-center max-w-md">
+          <div className="text-6xl mb-4">📡</div>
+          <p className="text-xl mb-2">Connection Error</p>
+          <p className="text-gray-400 mb-6">Unable to connect to server. Please check your internet connection or try again later.</p>
+          <div className="space-y-3">
+            <button 
+              onClick={() => window.location.reload()}
+              className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors w-full"
+            >
+              Refresh Page
+            </button>
+            <button 
+              onClick={() => window.history.back()}
+              className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors w-full"
+            >
+              Go Back
+            </button>
+          </div>
         </div>
       </div>
     )
