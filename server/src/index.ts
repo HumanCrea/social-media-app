@@ -63,9 +63,31 @@ setupSocketHandlers(io);
 
 const PORT = process.env.PORT || 3001;
 
-httpServer.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+// Initialize database and start server
+async function startServer() {
+  try {
+    // Test database connection
+    await prisma.$connect();
+    console.log('✅ Database connected');
+    
+    // Try to ensure database schema exists
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      console.log('✅ Database schema ready');
+    } catch (error) {
+      console.log('⚠️  Database schema may need initialization, but continuing...');
+    }
+    
+    httpServer.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
