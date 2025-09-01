@@ -41,11 +41,18 @@ const API_URL = 'https://social-media-app-production-5216.up.railway.app/api'
 console.log('🔍 AUTH STORE DEBUG - API_URL (hardcoded):', API_URL)
 console.log('🔍 AUTH STORE DEBUG - ENV VITE_API_URL:', (import.meta as any).env?.VITE_API_URL)
 
+// Set axios base URL to ensure all requests use the correct URL
+axios.defaults.baseURL = API_URL.replace('/api', '') // Remove /api from base since routes include it
+console.log('🔍 AUTH STORE DEBUG - Set axios baseURL to:', axios.defaults.baseURL)
+
 // Add axios request interceptor for debugging
 axios.interceptors.request.use(
   (config) => {
     const hasAuth = config.headers?.Authorization
-    console.log('🔍 AXIOS REQUEST - URL:', config.url, hasAuth ? '✅ Auth' : '❌ No Auth')
+    const fullURL = config.baseURL ? config.baseURL + config.url : config.url
+    console.log('🔍 AXIOS REQUEST - Full URL:', fullURL)
+    console.log('🔍 AXIOS REQUEST - Method:', config.method?.toUpperCase())
+    console.log('🔍 AXIOS REQUEST - Auth:', hasAuth ? '✅ Present' : '❌ Missing')
     if (!hasAuth && config.url?.includes('/api/')) {
       console.warn('🔍 AXIOS WARNING - API request without auth token!')
     }
