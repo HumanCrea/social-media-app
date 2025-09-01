@@ -36,7 +36,10 @@ interface RegisterData {
   password: string
 }
 
-const API_URL = (import.meta as any).env.VITE_API_URL || '/api'
+// Temporarily hardcode Railway URL to eliminate env variable issues
+const API_URL = 'https://social-media-app-production-5216.up.railway.app/api'
+console.log('🔍 AUTH STORE DEBUG - API_URL (hardcoded):', API_URL)
+console.log('🔍 AUTH STORE DEBUG - ENV VITE_API_URL:', (import.meta as any).env?.VITE_API_URL)
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -81,7 +84,13 @@ export const useAuthStore = create<AuthState>()(
 
       register: async (data: RegisterData) => {
         try {
-          const response = await axios.post(`${API_URL}/auth/register`, data)
+          const url = `${API_URL}/auth/register`
+          console.log('🔍 REGISTER DEBUG - Making request to:', url)
+          console.log('🔍 REGISTER DEBUG - Data:', data)
+          
+          const response = await axios.post(url, data)
+          
+          console.log('🔍 REGISTER DEBUG - Response:', response.data)
           
           // Registration now returns a message about email verification, not a token
           const { message, user } = response.data
@@ -91,6 +100,8 @@ export const useAuthStore = create<AuthState>()(
           
           return { message, user }
         } catch (error: any) {
+          console.log('🔍 REGISTER DEBUG - Error:', error)
+          console.log('🔍 REGISTER DEBUG - Error response:', error.response)
           throw new Error(error.response?.data?.error || 'Registration failed')
         }
       },
