@@ -23,7 +23,7 @@ interface AuthState {
   token: string | null | undefined
   login: (email: string, password: string) => Promise<void>
   googleLogin: (token: string) => Promise<void>
-  register: (data: RegisterData) => Promise<void>
+  register: (data: RegisterData) => Promise<{message: string, user?: any}>
   logout: () => void
   updateProfile: (data: Partial<User>) => Promise<void>
   initializeAuth: () => void
