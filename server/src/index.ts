@@ -70,12 +70,30 @@ async function startServer() {
     await prisma.$connect();
     console.log('✅ Database connected');
     
-    // Try to ensure database schema exists
+    // Initialize database schema
     try {
-      await prisma.$queryRaw`SELECT 1`;
+      // Try to access a table to see if schema exists
+      await prisma.user.findFirst();
       console.log('✅ Database schema ready');
     } catch (error) {
-      console.log('⚠️  Database schema may need initialization, but continuing...');
+      console.log('⚠️  Database schema not found, attempting to create...');
+      try {
+        // Run database push to create schema
+        const { exec } = require('child_process');
+        await new Promise((resolve, reject) => {
+          exec('npx prisma db push --accept-data-loss', (error, stdout, stderr) => {
+            if (error) {
+              console.log('⚠️  Schema creation failed, but continuing:', error.message);
+              resolve(null);
+            } else {
+              console.log('✅ Database schema created successfully');
+              resolve(stdout);
+            }
+          });
+        });
+      } catch (migrationError) {
+        console.log('⚠️  Migration failed, but server will continue...');
+      }
     }
     
     httpServer.listen(PORT, () => {
