@@ -63,6 +63,8 @@ export default function VideoPlayer({ video, isActive, onVideoEnd }: VideoPlayer
   const [progress, setProgress] = useState(0)
   const [hasViewed, setHasViewed] = useState(false)
   const [showCommentsModal, setShowCommentsModal] = useState(false)
+  const [videoError, setVideoError] = useState(false)
+  const [videoLoading, setVideoLoading] = useState(true)
   const videoRef = useRef<HTMLVideoElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
   const queryClient = useQueryClient()
@@ -205,9 +207,74 @@ export default function VideoPlayer({ video, isActive, onVideoEnd }: VideoPlayer
         muted={isMuted}
         playsInline
         poster={getFullImageUrl(video.thumbnailUrl) || video.thumbnailUrl}
+        onLoadStart={() => {
+          console.log('Video load started:', {
+            originalUrl: video.videoUrl,
+            fullUrl: getFullImageUrl(video.videoUrl) || video.videoUrl,
+            videoId: video.id
+          })
+          setVideoLoading(true)
+          setVideoError(false)
+        }}
+        onLoadedData={() => {
+          console.log('Video data loaded successfully for:', video.id)
+          setVideoLoading(false)
+        }}
+        onCanPlay={() => {
+          console.log('Video can play:', video.id)
+          setVideoLoading(false)
+        }}
         onError={(e) => {
-          console.error('Video failed to load:', video.videoUrl)
-          console.error('Attempted URL:', getFullImageUrl(video.videoUrl) || video.videoUrl)
+          console.error('Video failed to load:', {
+            originalUrl: video.videoUrl,
+            fullUrl: getFullImageUrl(video.videoUrl) || video.videoUrl,
+            currentSrc: videoRef.current?.src,
+            videoId: video.id,
+            error: e.currentTarget.error?.message || 'Unknown error',
+            networkState: e.currentTarget.networkState,
+            readyState: e.currentTarget.readyState
+          })
+          
+          // Try different URL formats in sequence
+          if (videoRef.current) {
+            const currentSrc = videoRef.current.src
+            const originalUrl = video.videoUrl
+            const fullUrl = getFullImageUrl(video.videoUrl) || video.videoUrl
+            
+            if (currentSrc === fullUrl && fullUrl !== originalUrl) {
+              // First retry: try original URL
+              console.log('Retrying with original URL...')
+              setVideoError(false)
+              setVideoLoading(true)
+              videoRef.current.src = originalUrl
+            } else if (currentSrc === originalUrl && !originalUrl.startsWith('http')) {
+              // Second retry: try with /uploads/ prefix if not already there
+              const uploadsUrl = originalUrl.startsWith('/uploads/') 
+                ? `${import.meta.env.VITE_API_URL || 'https://social-media-app-production-8dcf.up.railway.app'}${originalUrl}`
+                : `${import.meta.env.VITE_API_URL || 'https://social-media-app-production-8dcf.up.railway.app'}/uploads/${originalUrl}`
+              
+              if (uploadsUrl !== currentSrc) {
+                console.log('Retrying with uploads URL:', uploadsUrl)
+                setVideoError(false)
+                setVideoLoading(true)
+                videoRef.current.src = uploadsUrl
+              } else {
+                setVideoError(true)
+                setVideoLoading(false)
+              }
+            } else {
+              // Final state: show error
+              setVideoError(true)
+              setVideoLoading(false)
+            }
+          }
+        }}
+        onStalled={() => {
+          console.warn('Video stalled:', video.id)
+        }}
+        onWaiting={() => {
+          console.log('Video waiting for data:', video.id)
+          setVideoLoading(true)
         }}
       />
 
@@ -230,8 +297,29 @@ export default function VideoPlayer({ video, isActive, onVideoEnd }: VideoPlayer
         }}
       />
 
-      {/* Play Button Overlay - Only show when paused */}
-      {!isPlaying && (
+      {/* Loading Indicator */}
+      {videoLoading && !videoError && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+          <div className="bg-gray-900 bg-opacity-80 rounded-lg p-6 text-white">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+            <p className="text-sm">Loading video...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error Indicator */}
+      {videoError && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+          <div className="bg-red-900 bg-opacity-90 rounded-lg p-6 text-white text-center max-w-xs">
+            <div className="text-4xl mb-4">⚠️</div>
+            <p className="text-sm mb-2">Video failed to load</p>
+            <p className="text-xs text-gray-300">Check your connection or try refreshing</p>
+          </div>
+        </div>
+      )}
+
+      {/* Play Button Overlay - Only show when paused and video is ready */}
+      {!isPlaying && !videoLoading && !videoError && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
           <div className="bg-white bg-opacity-90 rounded-full p-8 text-black shadow-2xl border-4 border-white animate-pulse">
             <PlayIcon className="w-20 h-20 ml-1" />
