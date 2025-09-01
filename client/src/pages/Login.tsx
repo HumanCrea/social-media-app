@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { useToast } from '../contexts/ToastContext'
@@ -36,6 +36,27 @@ export default function Login() {
     }
   }
 
+  const handleGoogleResponse = useCallback(async (response: any) => {
+    setGoogleLoading(true)
+    
+    try {
+      await googleLogin(response.credential)
+      addToast({
+        type: 'success',
+        title: 'Welcome!',
+        message: 'Successfully signed in with Google'
+      })
+    } catch (err: any) {
+      addToast({
+        type: 'error',
+        title: 'Google login failed',
+        message: err.message || 'Authentication failed'
+      })
+    } finally {
+      setGoogleLoading(false)
+    }
+  }, [googleLogin, addToast])
+
   // Load Google Sign-In SDK
   useEffect(() => {
     const loadGoogleScript = () => {
@@ -59,28 +80,7 @@ export default function Login() {
     }
     
     loadGoogleScript()
-  }, [])
-
-  const handleGoogleResponse = async (response: any) => {
-    setGoogleLoading(true)
-    
-    try {
-      await googleLogin(response.credential)
-      addToast({
-        type: 'success',
-        title: 'Welcome!',
-        message: 'Successfully signed in with Google'
-      })
-    } catch (err: any) {
-      addToast({
-        type: 'error',
-        title: 'Google login failed',
-        message: err.message || 'Authentication failed'
-      })
-    } finally {
-      setGoogleLoading(false)
-    }
-  }
+  }, [handleGoogleResponse])
 
   const handleGoogleLogin = () => {
     if (window.google) {

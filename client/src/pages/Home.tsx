@@ -87,6 +87,12 @@ export default function Home() {
   const isLoading = activeTab === 'feed' ? feedLoading : publicLoading
   const error = activeTab === 'feed' ? feedError : publicError
 
+  // Debug logging
+  console.log('🔍 HOME DEBUG - activeTab:', activeTab)
+  console.log('🔍 HOME DEBUG - posts:', posts)
+  console.log('🔍 HOME DEBUG - posts is array:', Array.isArray(posts))
+  console.log('🔍 HOME DEBUG - typeof posts:', typeof posts)
+
   const handleLike = (postId: string) => {
     likeMutation.mutate(postId)
   }
@@ -174,7 +180,7 @@ export default function Home() {
             </p>
           </div>
         ) : (
-          posts.map((item) => {
+          Array.isArray(posts) ? posts.map((item) => {
             if (item.type === 'poll') {
               return (
                 <PollCard
@@ -194,7 +200,12 @@ export default function Home() {
                 />
               )
             }
-          })
+          }) : (
+            <div className="text-center py-12">
+              <p className="text-red-500">Error: Posts data is not in expected format</p>
+              <p className="text-sm text-gray-500 mt-2">Type: {typeof posts}</p>
+            </div>
+          )
         )}
       </div>
 
