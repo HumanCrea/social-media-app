@@ -243,6 +243,11 @@ export default function Profile() {
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
           </div>
+        ) : !Array.isArray(posts) ? (
+          <div className="text-center py-12">
+            <p className="text-red-500">Error: Posts data not in expected format</p>
+            <p className="text-sm text-gray-500 mt-2">Type: {typeof posts}</p>
+          </div>
         ) : posts.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500">

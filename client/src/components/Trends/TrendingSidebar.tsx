@@ -54,7 +54,7 @@ export default function TrendingSidebar() {
     <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
       <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Trending for you</h2>
       <div className="space-y-3">
-        {trendingHashtags.map((hashtag, index) => (
+        {Array.isArray(trendingHashtags) ? trendingHashtags.map((hashtag, index) => (
           <Link
             key={hashtag.id}
             to={`/hashtag/${hashtag.name}`}
@@ -77,7 +77,11 @@ export default function TrendingSidebar() {
               <HashtagIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
             </div>
           </Link>
-        ))}
+        )) : (
+          <div className="text-center py-8">
+            <p className="text-red-500 text-sm">Error: Trending data not in expected format</p>
+          </div>
+        )}
       </div>
     </div>
   )

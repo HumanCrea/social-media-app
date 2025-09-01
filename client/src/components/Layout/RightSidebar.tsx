@@ -71,7 +71,7 @@ export default function RightSidebar() {
                       No users found
                     </p>
                   ) : (
-                    searchResults.map((user) => (
+                    Array.isArray(searchResults) ? searchResults.map((user) => (
                       <Link
                         key={user.id}
                         to={`/profile/${user.username}`}
@@ -91,7 +91,11 @@ export default function RightSidebar() {
                           </p>
                         </div>
                       </Link>
-                    ))
+                    )) : (
+                      <div className="text-center py-4">
+                        <p className="text-sm text-red-500">Error: Search data not in expected format</p>
+                      </div>
+                    )
                   )}
                 </div>
               )}

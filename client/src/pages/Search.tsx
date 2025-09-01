@@ -209,7 +209,7 @@ export default function Search() {
               </div>
             ) : activeTab === 'users' ? (
               <div className="divide-y divide-gray-200">
-                {users.map((user) => (
+                {Array.isArray(users) ? users.map((user) => (
                   <Link
                     key={user.id}
                     to={`/profile/${user.username}`}
@@ -257,7 +257,12 @@ export default function Search() {
                       )}
                     </div>
                   </Link>
-                ))}
+                )) : (
+                  <div className="text-center py-12">
+                    <p className="text-red-500">Error: User data not in expected format</p>
+                    <p className="text-sm text-gray-500 mt-2">Type: {typeof users}</p>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-12 text-gray-500">

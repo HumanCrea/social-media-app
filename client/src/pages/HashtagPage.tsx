@@ -154,6 +154,11 @@ export default function HashtagPage() {
               Be the first to post with #{hashtagData.name}!
             </p>
           </div>
+        ) : !Array.isArray(posts) ? (
+          <div className="text-center py-12">
+            <p className="text-red-500">Error: Posts data not in expected format</p>
+            <p className="text-sm text-gray-500 mt-2">Type: {typeof posts}</p>
+          </div>
         ) : (
           posts.map((post) => (
             <PostCard

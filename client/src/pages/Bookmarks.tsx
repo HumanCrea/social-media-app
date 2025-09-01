@@ -118,6 +118,11 @@ export default function Bookmarks() {
               <ArrowLeftIcon className="w-4 h-4 rotate-180" />
             </Link>
           </div>
+        ) : !Array.isArray(posts) ? (
+          <div className="text-center py-12">
+            <p className="text-red-500">Error: Posts data not in expected format</p>
+            <p className="text-sm text-gray-500 mt-2">Type: {typeof posts}</p>
+          </div>
         ) : (
           posts.map((post) => (
             <PostCard
