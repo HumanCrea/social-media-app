@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { Link } from 'react-router-dom'
 import TrendingSidebar from '../Trends/TrendingSidebar'
 import ActivityFeed from '../Activity/ActivityFeed'
+import { getFullImageUrl } from '../../store/authStore'
+import { useAuthStore } from '../../store/authStore'
 
 interface SuggestedUser {
   id: string
@@ -15,16 +17,23 @@ interface SuggestedUser {
 
 export default function RightSidebar() {
   const [searchQuery, setSearchQuery] = useState('')
+  const { user: currentUser } = useAuthStore()
+  const queryClient = useQueryClient()
   
-  // Fetch suggested users (users not followed) - disabled for now
-  // const { data: suggestedUsers = [] } = useQuery({
-  //   queryKey: ['suggested-users'],
-  //   queryFn: async () => {
-  //     const response = await axios.get('/api/users/search/suggested')
-  //     return response.data as SuggestedUser[]
-  //   },
-  //   enabled: false
-  // })
+  // Fetch suggested users (users not followed)
+  const { data: suggestedUsers = [], isLoading: suggestedLoading } = useQuery({
+    queryKey: ['suggested-users'],
+    queryFn: async () => {
+      const response = await axios.get('/api/users/suggested?limit=3')
+      
+      // Check if response contains an error
+      if (response.data && typeof response.data === 'object' && 'error' in response.data) {
+        throw new Error(response.data.error)
+      }
+      
+      return Array.isArray(response.data) ? response.data as SuggestedUser[] : []
+    }
+  })
 
   // Search users
   const { data: searchResults = [], isLoading: searchLoading } = useQuery({
@@ -35,6 +44,16 @@ export default function RightSidebar() {
       return response.data as SuggestedUser[]
     },
     enabled: searchQuery.length > 2
+  })
+
+  // Follow mutation
+  const followMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      await axios.post(`/api/users/follow/${userId}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['suggested-users'] })
+    }
   })
 
   return (
@@ -79,8 +98,12 @@ export default function RightSidebar() {
                       >
                         <img
                           className="w-10 h-10 avatar"
-                          src={user.avatar || `https://ui-avatars.com/api/?name=${user.displayName}&background=3b82f6&color=fff`}
+                          src={getFullImageUrl(user.avatar) || `https://ui-avatars.com/api/?name=${user.displayName}&background=3b82f6&color=fff`}
                           alt={user.displayName}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.src = `https://ui-avatars.com/api/?name=${user.displayName}&background=3b82f6&color=fff`
+                          }}
                         />
                         <div className="ml-3 flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
@@ -109,39 +132,59 @@ export default function RightSidebar() {
         {/* Activity Feed */}
         <ActivityFeed />
 
-        {/* Who to follow (Placeholder) */}
+        {/* Who to follow */}
         <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Who to follow</h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <img
-                  className="w-10 h-10 avatar"
-                  src="https://ui-avatars.com/api/?name=John+Doe&background=3b82f6&color=fff"
-                  alt="John Doe"
-                />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">John Doe</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">@johndoe</p>
+          {suggestedLoading ? (
+            <div className="space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="animate-pulse flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full"></div>
+                    <div className="ml-3">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-20 mb-1"></div>
+                      <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-16"></div>
+                    </div>
+                  </div>
+                  <div className="h-8 bg-gray-200 dark:bg-gray-600 rounded w-16"></div>
                 </div>
-              </div>
-              <button className="btn-outline text-sm">Follow</button>
+              ))}
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <img
-                  className="w-10 h-10 avatar"
-                  src="https://ui-avatars.com/api/?name=Jane+Smith&background=3b82f6&color=fff"
-                  alt="Jane Smith"
-                />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Jane Smith</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">@janesmith</p>
+          ) : suggestedUsers.length === 0 ? (
+            <div className="text-center py-6">
+              <div className="text-3xl mb-2">👥</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">No suggestions available</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {suggestedUsers.map((user) => (
+                <div key={user.id} className="flex items-center justify-between">
+                  <Link to={`/profile/${user.username}`} className="flex items-center flex-1 min-w-0">
+                    <img
+                      className="w-10 h-10 avatar"
+                      src={getFullImageUrl(user.avatar) || `https://ui-avatars.com/api/?name=${user.displayName}&background=3b82f6&color=fff`}
+                      alt={user.displayName}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.src = `https://ui-avatars.com/api/?name=${user.displayName}&background=3b82f6&color=fff`
+                      }}
+                    />
+                    <div className="ml-3 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user.displayName}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">@{user.username}</p>
+                    </div>
+                  </Link>
+                  <button
+                    onClick={() => followMutation.mutate(user.id)}
+                    disabled={followMutation.isPending}
+                    className="btn-outline text-sm disabled:opacity-50"
+                  >
+                    {followMutation.isPending ? 'Following...' : 'Follow'}
+                  </button>
                 </div>
-              </div>
-              <button className="btn-outline text-sm">Follow</button>
+              ))}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
