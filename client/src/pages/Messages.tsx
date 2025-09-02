@@ -123,15 +123,17 @@ export default function Messages() {
     }
   }
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!message.trim() || !selectedChat || !socket) return
+    if (!message.trim() || !selectedChat) return
 
-    socket.emit('typing-stop', selectedChat)
+    const messageContent = message.trim()
+    const tempId = Date.now().toString()
 
+    // Optimistic UI update
     const newMessage = {
-      id: Date.now().toString(),
-      content: message.trim(),
+      id: tempId,
+      content: messageContent,
       createdAt: new Date().toISOString(),
       isRead: false,
       sender: {
@@ -143,8 +145,47 @@ export default function Messages() {
     }
 
     setMessages(prev => [...prev, newMessage])
-    socket.emit('send-message', { chatId: selectedChat, content: message.trim() })
     setMessage('')
+
+    try {
+      // Try Socket.IO first
+      if (socket?.connected) {
+        socket.emit('typing-stop', selectedChat)
+        socket.emit('send-message', { chatId: selectedChat, content: messageContent })
+      } else {
+        // Fallback to REST API
+        console.log('Socket not connected, using API fallback')
+        await axios.post(`/api/chats/${selectedChat}/messages`, {
+          content: messageContent
+        })
+        
+        // Refresh messages after API send
+        if (selectedChat) {
+          const response = await axios.get(`/api/chats/${selectedChat}/messages`)
+          setMessages(response.data || [])
+        }
+        console.log('Message sent via API and messages refreshed')
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      // Remove the optimistic message on error
+      setMessages(prev => prev.filter(msg => msg.id !== tempId))
+      
+      // Show error message
+      const errorMessage = {
+        id: 'error-' + Date.now(),
+        content: '❌ Failed to send message. Please try again.',
+        createdAt: new Date().toISOString(),
+        isRead: true,
+        sender: {
+          id: 'system',
+          username: 'system',
+          displayName: 'System',
+          avatar: undefined
+        }
+      }
+      setMessages(prev => [...prev, errorMessage])
+    }
   }
 
   const getOtherParticipant = (chat: Chat) => {

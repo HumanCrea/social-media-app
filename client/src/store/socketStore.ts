@@ -24,7 +24,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       return
     }
 
-    const socket = io('http://localhost:3001', {
+    const socket = io((import.meta as any).env?.VITE_API_URL || 'https://social-media-app-production-5216.up.railway.app', {
       auth: {
         token
       }
