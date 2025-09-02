@@ -158,6 +158,8 @@ model ChatParticipant {
 model Message {
   id        String   @id @default(cuid())
   content   String
+  mediaUrl  String?
+  mediaType String?
   createdAt DateTime @default(now())
   isRead    Boolean  @default(false)
 
