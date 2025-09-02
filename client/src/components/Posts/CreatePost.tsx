@@ -151,9 +151,12 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
             {selectedImage && (
               <div className="relative mt-3">
                 <img
-                  src={selectedImage}
+                  src={getFullImageUrl(selectedImage) || selectedImage}
                   alt="Selected"
                   className="w-full max-h-80 object-cover rounded-2xl border border-gray-200"
+                  onError={(e) => {
+                    console.error('Failed to load image preview:', selectedImage)
+                  }}
                 />
                 <button
                   type="button"
