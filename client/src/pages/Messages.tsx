@@ -29,6 +29,8 @@ interface Message {
   content: string
   createdAt: string
   isRead: boolean
+  mediaUrl?: string
+  mediaType?: 'image' | 'video' | 'document'
   sender: {
     id: string
     username: string
@@ -45,6 +47,8 @@ export default function Messages() {
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set())
+  const [uploadingMedia, setUploadingMedia] = useState(false)
+  const [selectedMedia, setSelectedMedia] = useState<File | null>(null)
   const { socket } = useSocketStore()
   const { user } = useAuthStore()
 
@@ -62,10 +66,14 @@ export default function Messages() {
     queryKey: ['messages', selectedChat],
     queryFn: async () => {
       if (!selectedChat) return []
+      console.log('🔍 Loading messages for chat:', selectedChat)
       const response = await axios.get(`/api/chats/${selectedChat}/messages`)
+      console.log('📨 Loaded messages:', response.data)
       return response.data as Message[]
     },
-    enabled: !!selectedChat
+    enabled: !!selectedChat,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true
   })
 
   useEffect(() => {
@@ -150,21 +158,28 @@ export default function Messages() {
     try {
       // Try Socket.IO first
       if (socket?.connected) {
+        console.log('🔌 Sending via Socket.IO:', { chatId: selectedChat, content: messageContent })
         socket.emit('typing-stop', selectedChat)
         socket.emit('send-message', { chatId: selectedChat, content: messageContent })
       } else {
         // Fallback to REST API
-        console.log('Socket not connected, using API fallback')
-        await axios.post(`/api/chats/${selectedChat}/messages`, {
+        console.log('📡 Socket not connected, using API fallback')
+        console.log('📤 Sending POST to:', `/api/chats/${selectedChat}/messages`)
+        
+        const apiResponse = await axios.post(`/api/chats/${selectedChat}/messages`, {
           content: messageContent
         })
         
+        console.log('📥 API Response:', apiResponse.data)
+        
         // Refresh messages after API send
         if (selectedChat) {
+          console.log('🔄 Refreshing messages...')
           const response = await axios.get(`/api/chats/${selectedChat}/messages`)
+          console.log('📋 Fresh messages:', response.data)
           setMessages(response.data || [])
         }
-        console.log('Message sent via API and messages refreshed')
+        console.log('✅ Message sent via API and messages refreshed')
       }
     } catch (error) {
       console.error('Failed to send message:', error)
@@ -185,6 +200,96 @@ export default function Messages() {
         }
       }
       setMessages(prev => [...prev, errorMessage])
+    }
+  }
+
+  const handleMediaUpload = async (file: File) => {
+    if (!selectedChat) return
+
+    setUploadingMedia(true)
+    const tempId = Date.now().toString()
+
+    try {
+      // Create form data for file upload
+      const formData = new FormData()
+      formData.append('media', file)
+      formData.append('chatId', selectedChat)
+
+      // Determine media type
+      const mediaType = file.type.startsWith('image/') ? 'image' : 
+                       file.type.startsWith('video/') ? 'video' : 'document'
+
+      // Optimistic UI update with preview
+      const mediaMessage = {
+        id: tempId,
+        content: file.name,
+        createdAt: new Date().toISOString(),
+        isRead: false,
+        mediaUrl: URL.createObjectURL(file),
+        mediaType,
+        sender: {
+          id: user?.id || '',
+          username: user?.username || '',
+          displayName: user?.displayName || '',
+          avatar: user?.avatar
+        }
+      }
+
+      setMessages(prev => [...prev, mediaMessage])
+
+      // Upload media
+      const uploadResponse = await axios.post('/api/upload/media', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+
+      // Send message with media URL
+      const messageContent = file.name
+      const mediaUrl = uploadResponse.data.url
+
+      if (socket?.connected) {
+        socket.emit('send-message', { 
+          chatId: selectedChat, 
+          content: messageContent,
+          mediaUrl,
+          mediaType 
+        })
+      } else {
+        await axios.post(`/api/chats/${selectedChat}/messages`, {
+          content: messageContent,
+          mediaUrl,
+          mediaType
+        })
+
+        if (selectedChat) {
+          const response = await axios.get(`/api/chats/${selectedChat}/messages`)
+          setMessages(response.data || [])
+        }
+      }
+
+      console.log('✅ Media message sent successfully')
+    } catch (error) {
+      console.error('Failed to send media:', error)
+      
+      // Remove failed media message
+      setMessages(prev => prev.filter(msg => msg.id !== tempId))
+      
+      // Show error
+      const errorMessage = {
+        id: 'error-' + Date.now(),
+        content: '❌ Failed to send media. Please try again.',
+        createdAt: new Date().toISOString(),
+        isRead: true,
+        sender: {
+          id: 'system',
+          username: 'system',
+          displayName: 'System',
+          avatar: undefined
+        }
+      }
+      setMessages(prev => [...prev, errorMessage])
+    } finally {
+      setUploadingMedia(false)
+      setSelectedMedia(null)
     }
   }
 
@@ -316,7 +421,43 @@ export default function Messages() {
                             : 'bg-gray-200 text-gray-900'
                         }`}
                       >
-                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                        {/* Media Content */}
+                        {msg.mediaUrl && (
+                          <div className="mb-2">
+                            {msg.mediaType === 'image' ? (
+                              <img 
+                                src={msg.mediaUrl} 
+                                alt="Shared image"
+                                className="max-w-full h-auto rounded-lg cursor-pointer"
+                                onClick={() => window.open(msg.mediaUrl, '_blank')}
+                              />
+                            ) : msg.mediaType === 'video' ? (
+                              <video 
+                                src={msg.mediaUrl} 
+                                controls
+                                className="max-w-full h-auto rounded-lg"
+                              />
+                            ) : (
+                              <a 
+                                href={msg.mediaUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className={`flex items-center space-x-2 p-2 rounded border ${
+                                  isOwnMessage ? 'border-primary-300 bg-primary-700' : 'border-gray-300 bg-gray-100'
+                                }`}
+                              >
+                                <span>📎</span>
+                                <span>{msg.content}</span>
+                              </a>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Text Content */}
+                        {!msg.mediaUrl && (
+                          <p className="whitespace-pre-wrap">{msg.content}</p>
+                        )}
+                        
                         <p className={`text-xs mt-1 ${isOwnMessage ? 'text-primary-100' : 'text-gray-500'}`}>
                           {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
                         </p>
@@ -345,6 +486,29 @@ export default function Messages() {
             {/* Message Input */}
             <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200 bg-white">
               <div className="flex space-x-3">
+                {/* Media Upload Button */}
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*,video/*,.pdf,.doc,.docx"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        setSelectedMedia(file)
+                        handleMediaUpload(file)
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <div className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
+                    {uploadingMedia ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600"></div>
+                    ) : (
+                      <span className="text-xl">📎</span>
+                    )}
+                  </div>
+                </label>
+
                 <input
                   type="text"
                   value={message}
@@ -354,12 +518,36 @@ export default function Messages() {
                 />
                 <button
                   type="submit"
-                  disabled={!message.trim()}
+                  disabled={!message.trim() || uploadingMedia}
                   className="btn-primary disabled:opacity-50"
                 >
-                  Send
+                  {uploadingMedia ? 'Uploading...' : 'Send'}
                 </button>
               </div>
+
+              {/* Media Preview */}
+              {selectedMedia && (
+                <div className="mt-3 p-3 bg-gray-50 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl">
+                      {selectedMedia.type.startsWith('image/') ? '🖼️' : 
+                       selectedMedia.type.startsWith('video/') ? '🎥' : '📄'}
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium">{selectedMedia.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {(selectedMedia.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedMedia(null)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
             </form>
           </>
         ) : (

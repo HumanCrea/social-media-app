@@ -7,6 +7,8 @@ const router = express.Router();
 
 const sendMessageSchema = z.object({
   content: z.string().min(1).max(1000),
+  mediaUrl: z.string().optional(),
+  mediaType: z.enum(['image', 'video', 'document']).optional(),
   receiverId: z.string().optional(),
   chatId: z.string().optional()
 });
@@ -179,7 +181,7 @@ router.get('/:chatId/messages', authenticateToken, async (req: AuthRequest, res)
 router.post('/:chatId/messages', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { chatId } = req.params;
-    const { content } = sendMessageSchema.parse(req.body);
+    const { content, mediaUrl, mediaType } = sendMessageSchema.parse(req.body);
 
     // Verify user is participant
     const chat = await prisma.chat.findFirst({
@@ -199,6 +201,8 @@ router.post('/:chatId/messages', authenticateToken, async (req: AuthRequest, res
     const message = await prisma.message.create({
       data: {
         content,
+        mediaUrl,
+        mediaType,
         senderId: req.user!.id,
         chatId
       },
