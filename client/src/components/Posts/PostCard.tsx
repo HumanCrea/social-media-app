@@ -99,52 +99,58 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
   }
 
   return (
-    <article className="relative border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+    <article className="post-card fade-in">
       {/* Live Reactions Overlay */}
       <div className="absolute inset-0 pointer-events-none z-10">
         <LiveReactions postId={post.id} />
       </div>
       
-      <div className="p-6 relative z-0">
-        <div className="flex space-x-3">
+      <div className="relative z-0">
+        <div className="flex space-x-4">
           {/* Avatar */}
-          <Link to={`/profile/${post.author.username}`} className="flex-shrink-0 relative">
-            <img
-              className="w-12 h-12 avatar"
-              src={getFullImageUrl(post.author.avatar) || `https://ui-avatars.com/api/?name=${post.author.displayName}&background=3b82f6&color=fff`}
-              alt={post.author.displayName}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement
-                target.src = `https://ui-avatars.com/api/?name=${post.author.displayName}&background=3b82f6&color=fff`
-              }}
-            />
-            <div className="absolute -bottom-1 -right-1">
-              <OnlineStatus isOnline={isOnline} size="md" />
+          <Link to={`/profile/${post.author.username}`} className="flex-shrink-0 relative group">
+            <div className="relative">
+              <img
+                className="w-14 h-14 avatar-glow transition-all duration-300 group-hover:scale-110"
+                src={getFullImageUrl(post.author.avatar) || `https://ui-avatars.com/api/?name=${post.author.displayName}&background=3b82f6&color=fff`}
+                alt={post.author.displayName}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement
+                  target.src = `https://ui-avatars.com/api/?name=${post.author.displayName}&background=3b82f6&color=fff`
+                }}
+              />
+              {isOnline && (
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-3 border-white shadow-lg animate-pulse" />
+              )}
             </div>
           </Link>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-2">
-                <div className="flex items-center space-x-1">
+                <div className="flex items-center space-x-2">
                   <Link 
                     to={`/profile/${post.author.username}`}
-                    className="font-medium text-gray-900 hover:underline"
+                    className="font-semibold text-gray-900 dark:text-white hover:text-blue-600 transition-colors"
                   >
                     {post.author.displayName}
                   </Link>
-                  {isVerified && <VerificationBadge type="verified" size="sm" />}
+                  {isVerified && (
+                    <div className="animate-pulse">
+                      <VerificationBadge type="verified" size="sm" />
+                    </div>
+                  )}
                 </div>
                 <Link 
                   to={`/profile/${post.author.username}`}
-                  className="text-gray-500 hover:underline"
+                  className="text-gray-500 hover:text-blue-500 transition-colors"
                 >
                   @{post.author.username}
                 </Link>
-                <span className="text-gray-500">·</span>
-                <time className="text-gray-500 text-sm" dateTime={post.createdAt}>
+                <span className="text-gray-300">•</span>
+                <time className="text-gray-500 text-sm hover:text-gray-700 transition-colors" dateTime={post.createdAt}>
                   {timeAgo}
                 </time>
               </div>
@@ -153,27 +159,27 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
                 <div className="relative">
                   <button
                     onClick={() => setShowOptions(!showOptions)}
-                    className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                    className="p-2 rounded-xl hover:bg-gray-100/80 transition-all duration-300 hover:scale-110 interactive"
                   >
-                    <EllipsisHorizontalIcon className="w-5 h-5 text-gray-400" />
+                    <EllipsisHorizontalIcon className="w-5 h-5 text-gray-400 hover:text-gray-600" />
                   </button>
                   
                   {showOptions && (
-                    <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                    <div className="absolute right-0 mt-2 w-52 card-glass shadow-2xl z-20 slide-up">
                       {isOwnPost ? (
                         <>
                           <button 
                             onClick={handleEditClick}
-                            className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-t-lg flex items-center"
+                            className="w-full text-left px-4 py-3 text-gray-700 hover:bg-white/50 rounded-t-2xl flex items-center transition-all duration-300 hover:translate-x-1"
                           >
-                            <PencilIcon className="w-4 h-4 mr-2" />
+                            <PencilIcon className="w-4 h-4 mr-3 text-blue-500" />
                             Edit post
                           </button>
                           <button 
                             onClick={handleDeleteClick}
-                            className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded-b-lg flex items-center"
+                            className="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50/80 rounded-b-2xl flex items-center transition-all duration-300 hover:translate-x-1"
                           >
-                            <TrashIcon className="w-4 h-4 mr-2" />
+                            <TrashIcon className="w-4 h-4 mr-3" />
                             Delete post
                           </button>
                         </>
@@ -184,9 +190,9 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
                               setIsReportModalOpen(true)
                               setShowOptions(false)
                             }}
-                            className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-t-lg flex items-center"
+                            className="w-full text-left px-4 py-3 text-gray-700 hover:bg-white/50 rounded-t-2xl flex items-center transition-all duration-300 hover:translate-x-1"
                           >
-                            <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
+                            <ExclamationTriangleIcon className="w-4 h-4 mr-3 text-yellow-500" />
                             Report post
                           </button>
                           <button 
@@ -194,9 +200,9 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
                               console.log('Block user:', post.author.id)
                               setShowOptions(false)
                             }}
-                            className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded-b-lg flex items-center"
+                            className="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50/80 rounded-b-2xl flex items-center transition-all duration-300 hover:translate-x-1"
                           >
-                            <NoSymbolIcon className="w-4 h-4 mr-2" />
+                            <NoSymbolIcon className="w-4 h-4 mr-3" />
                             Block user
                           </button>
                         </>
@@ -208,19 +214,23 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
             </div>
 
             {/* Post Content */}
-            <div className="mt-2">
-              <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
+            <div className="mb-4">
+              <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed text-[15px]">
                 {renderContentWithHashtags(post.content)}
               </p>
               
               {post.imageUrl && (
-                <div className="mt-3">
+                <div className="mt-4 group">
                   <img
                     src={getFullImageUrl(post.imageUrl) || post.imageUrl}
                     alt="Post image"
-                    className="rounded-2xl max-w-full border border-gray-200 dark:border-gray-600"
+                    className="rounded-3xl max-w-full border border-gray-200/50 dark:border-gray-600/50 shadow-lg transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-blue-500/10 cursor-pointer interactive"
                     onError={(e) => {
                       console.error('Failed to load post image:', post.imageUrl)
+                    }}
+                    onClick={() => {
+                      // Could implement image modal here
+                      console.log('Image clicked')
                     }}
                   />
                 </div>
@@ -228,16 +238,18 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
             </div>
 
             {/* Actions */}
-            <PostActions
-              postId={post.id}
-              isLiked={post.isLiked}
-              isBookmarked={post.isBookmarked}
-              likesCount={post._count.likes}
-              commentsCount={post._count.comments}
-              bookmarksCount={post._count.bookmarks || 0}
-              onLike={onLike}
-              onComment={handleCommentClick}
-            />
+            <div className="border-t border-gray-100/80 pt-4">
+              <PostActions
+                postId={post.id}
+                isLiked={post.isLiked}
+                isBookmarked={post.isBookmarked}
+                likesCount={post._count.likes}
+                commentsCount={post._count.comments}
+                bookmarksCount={post._count.bookmarks || 0}
+                onLike={onLike}
+                onComment={handleCommentClick}
+              />
+            </div>
           </div>
         </div>
       </div>
