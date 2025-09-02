@@ -36,6 +36,7 @@ interface RegisterData {
 }
 
 // Temporarily hardcode Railway URL to eliminate env variable issues
+// TODO: Update this URL with your actual Railway backend service URL
 const API_URL = 'https://social-media-app-production-5216.up.railway.app/api'
 const BASE_URL = 'https://social-media-app-production-5216.up.railway.app'
 console.log('🔍 AUTH STORE DEBUG - API_URL (hardcoded):', API_URL)

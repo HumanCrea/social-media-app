@@ -216,7 +216,7 @@ export default function Messages() {
       formData.append('chatId', selectedChat)
 
       // Determine media type
-      const mediaType = file.type.startsWith('image/') ? 'image' : 
+      const mediaType: 'image' | 'video' | 'document' = file.type.startsWith('image/') ? 'image' : 
                        file.type.startsWith('video/') ? 'video' : 'document'
 
       // Optimistic UI update with preview
