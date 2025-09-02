@@ -120,7 +120,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
                 }}
               />
               {isOnline && (
-                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-3 border-white shadow-lg animate-pulse" />
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-white shadow-lg animate-pulse" />
               )}
             </div>
           </Link>
@@ -215,7 +215,7 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
 
             {/* Post Content */}
             <div className="mb-4">
-              <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed text-[15px]">
+              <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed text-sm">
                 {renderContentWithHashtags(post.content)}
               </p>
               
