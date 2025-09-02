@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { XMarkIcon, PhotoIcon, VideoCameraIcon } from '@heroicons/react/24/outline'
 import { useToast } from '../../contexts/ToastContext'
-import { useAuthStore } from '../../store/authStore'
+import { useAuthStore, getFullImageUrl } from '../../store/authStore'
 import { useAchievementsContext } from '../../contexts/AchievementsContext'
 
 interface CreateStoryModalProps {
@@ -119,8 +119,12 @@ export default function CreateStoryModal({ isOpen, onClose }: CreateStoryModalPr
             <div className="flex items-center space-x-3">
               <img
                 className="w-12 h-12 avatar"
-                src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.displayName}&background=3b82f6&color=fff`}
+                src={getFullImageUrl(user?.avatar) || `https://ui-avatars.com/api/?name=${user?.displayName}&background=3b82f6&color=fff`}
                 alt={user?.displayName}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement
+                  target.src = `https://ui-avatars.com/api/?name=${user?.displayName}&background=3b82f6&color=fff`
+                }}
               />
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">{user?.displayName}</p>
@@ -133,15 +137,21 @@ export default function CreateStoryModal({ isOpen, onClose }: CreateStoryModalPr
               <div className="relative rounded-xl overflow-hidden">
                 {mediaType === 'video' ? (
                   <video
-                    src={selectedMedia}
+                    src={getFullImageUrl(selectedMedia) || selectedMedia}
                     className="w-full h-64 object-cover"
                     controls
+                    onError={(e) => {
+                      console.error('Video preview failed to load:', selectedMedia)
+                    }}
                   />
                 ) : (
                   <img
-                    src={selectedMedia}
+                    src={getFullImageUrl(selectedMedia) || selectedMedia}
                     alt="Story media"
                     className="w-full h-64 object-cover"
+                    onError={(e) => {
+                      console.error('Image preview failed to load:', selectedMedia)
+                    }}
                   />
                 )}
                 <button
