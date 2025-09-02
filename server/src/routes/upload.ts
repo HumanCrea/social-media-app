@@ -98,6 +98,43 @@ router.post('/story', authenticateToken, upload.single('media'), (req, res) => {
   }
 });
 
+// Upload media for messages (image, video, or document)
+router.post('/media', authenticateToken, multer({
+  storage: storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB limit for messages
+  },
+  fileFilter: (req, file, cb) => {
+    // Allow images, videos, and documents for messages
+    if (file.mimetype.startsWith('image/') || 
+        file.mimetype.startsWith('video/') || 
+        file.mimetype.startsWith('application/pdf') ||
+        file.mimetype.startsWith('application/msword') ||
+        file.mimetype.startsWith('application/vnd.openxmlformats') ||
+        file.mimetype.startsWith('text/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('File type not allowed for messages'));
+    }
+  }
+}).single('media'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const fileUrl = `/uploads/${req.file.filename}`;
+    res.json({ 
+      url: fileUrl,
+      filename: req.file.filename,
+      size: req.file.size,
+      type: req.file.mimetype
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Upload failed' });
+  }
+});
+
 // Error handling middleware
 router.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   if (error instanceof multer.MulterError) {

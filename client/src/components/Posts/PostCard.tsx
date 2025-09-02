@@ -216,9 +216,12 @@ export default function PostCard({ post, onLike, onComment, currentUserId }: Pos
               {post.imageUrl && (
                 <div className="mt-3">
                   <img
-                    src={post.imageUrl}
+                    src={getFullImageUrl(post.imageUrl) || post.imageUrl}
                     alt="Post image"
                     className="rounded-2xl max-w-full border border-gray-200 dark:border-gray-600"
+                    onError={(e) => {
+                      console.error('Failed to load post image:', post.imageUrl)
+                    }}
                   />
                 </div>
               )}
